@@ -64,6 +64,18 @@
                                 </div>
                             </div>
                         </label>
+                        <label class="form-selectgroup-item flex-fill">
+                            <input type="radio" name="role" value="supplier" class="form-selectgroup-input" {{ old('role') == 'supplier' ? 'checked' : '' }}>
+                            <div class="form-selectgroup-label d-flex align-items-center p-3">
+                                <div class="me-3">
+                                    <span class="form-selectgroup-check"></span>
+                                </div>
+                                <div>
+                                    <strong>Supplier</strong>
+                                    <div class="text-muted">Product supply management and order fulfillment</div>
+                                </div>
+                            </div>
+                        </label>
                     </div>
                     @error('role')
                         <div class="invalid-feedback d-block">{{ $message }}</div>

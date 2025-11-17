@@ -93,7 +93,7 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->loadMissing(['customer', 'details']);
+        $order->loadMissing(['customer', 'details.product.unit']);
 
         return view('orders.show', [
             'order' => $order,
@@ -126,6 +126,40 @@ class OrderController extends Controller
         return redirect()
             ->route('orders.index')
             ->with('success', 'Order has been removed successfully!');
+    }
+
+    /**
+     * Update order status via AJAX
+     */
+    public function updateOrderStatus(Request $request, Order $order)
+    {
+        $request->validate([
+            'status' => 'required|string|in:Cancelled,For Delivery,Completed',
+        ]);
+
+        try {
+            // Map the new status to the enum values
+            $statusMap = [
+                'Cancelled' => OrderStatus::CANCELLED,
+                'For Delivery' => OrderStatus::FOR_DELIVERY,
+                'Completed' => OrderStatus::COMPLETE,
+            ];
+
+            $newStatus = $statusMap[$request->status];
+            
+            $order->update(['order_status' => $newStatus]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order status updated successfully.',
+                'status' => $request->status,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update order status: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function downloadInvoice($order)
@@ -165,7 +199,7 @@ class OrderController extends Controller
 public function updateStatus(Request $request, Order $order)
 {
     $request->validate([
-        'order_status' => 'required|in:pending,complete,cancelled',
+        'order_status' => 'required|in:pending,for_delivery,complete,cancelled',
     ]);
 
     $newStatus = OrderStatus::from($request->order_status);

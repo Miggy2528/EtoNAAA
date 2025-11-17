@@ -153,6 +153,11 @@
             color: #856404;
         }
 
+        .status-for-delivery {
+            background-color: #cfe2ff;
+            color: #084298;
+        }
+
         .status-complete {
             background-color: #d4edda;
             color: #155724;
@@ -161,6 +166,11 @@
         .status-cancelled {
             background-color: #f8d7da;
             color: #721c24;
+        }
+
+        .status-warning {
+            background-color: #fff3cd;
+            color: #856404;
         }
 
         .modal-header {
@@ -352,13 +362,15 @@
                                         <td>
                                             @php
                                                 $statusClass = match($order->order_status) {
+                                                    \App\Enums\OrderStatus::PENDING => 'status-pending',
+                                                    \App\Enums\OrderStatus::FOR_DELIVERY => 'status-for-delivery',
                                                     \App\Enums\OrderStatus::COMPLETE => 'status-complete',
                                                     \App\Enums\OrderStatus::CANCELLED => 'status-cancelled',
                                                     default => 'status-pending'
                                                 };
                                             @endphp
                                             <span class="badge status-badge {{ $statusClass }}">
-                                                {{ $order->order_status instanceof \App\Enums\OrderStatus ? $order->order_status->label() : ucfirst($order->order_status) }}
+                                                {{ $order->order_status->label() }}
                                             </span>
                                         </td>
                                         <td class="text-center">

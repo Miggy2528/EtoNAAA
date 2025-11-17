@@ -133,18 +133,27 @@ class OptimizePerformance extends Command
         try {
             // Database info
             $dbInfo = PerformanceMonitoringService::getDatabaseInfo();
-            $this->line('Database: ' . $dbInfo['driver'] . '://' . $dbInfo['host'] . '/' . $dbInfo['database']);
+            if (isset($dbInfo['error'])) {
+                $this->error('Database Info Error: ' . $dbInfo['error']);
+            } else {
+                $this->line('Database: ' . $dbInfo['driver'] . '://' . $dbInfo['host'] . '/' . $dbInfo['database']);
+            }
 
             // Table statistics
             $tableStats = PerformanceMonitoringService::getTableStats();
             $this->line('');
             $this->line('Table Statistics:');
             
-            foreach ($tableStats as $table => $stats) {
-                if (isset($stats['error'])) {
-                    $this->error("  {$table}: Error - {$stats['error']}");
-                } else {
-                    $this->line("  {$table}: {$stats['row_count']} rows (~{$stats['estimated_size']})");
+            // Check if we got an error instead of table stats
+            if (isset($tableStats['_error'])) {
+                $this->error('  Table Stats Error: ' . $tableStats['_error']);
+            } else {
+                foreach ($tableStats as $table => $stats) {
+                    if (isset($stats['error'])) {
+                        $this->error("  {$table}: Error - {$stats['error']}");
+                    } else {
+                        $this->line("  {$table}: {$stats['row_count']} rows (~{$stats['estimated_size']})");
+                    }
                 }
             }
 

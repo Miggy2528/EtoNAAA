@@ -94,6 +94,25 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        // Check if the authenticated user is a supplier (suppliers should use supplier login)
+        $user = Auth::user();
+        if ($user->role === 'supplier') {
+            Auth::logout();
+            
+            throw ValidationException::withMessages([
+                'email' => 'This is the Admin/Staff login. Suppliers should use the Supplier Login portal.',
+            ]);
+        }
+
+        // Check if the authenticated user is allowed (admin or staff only)
+        if (!in_array($user->role, ['admin', 'staff'])) {
+            Auth::logout();
+            
+            throw ValidationException::withMessages([
+                'email' => 'You are not authorized to access the admin/staff area.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
         // Log successful attempt
         $this->adminAuthService->logSuccessfulAttempt($this->email);

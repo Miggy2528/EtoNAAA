@@ -34,7 +34,6 @@ class StoreProductRequest extends FormRequest
             'meat_cut_id'       => 'required|integer|exists:meat_cuts,id',
             'quantity'          => 'required|integer|min:0',
             'price_per_kg'      => 'required|numeric|min:0',
-            'storage_location'  => 'required|string',
             'expiration_date'   => 'required|date|after:today',
             'source'            => 'required|string',
             'notes'             => 'nullable|string|max:1000',

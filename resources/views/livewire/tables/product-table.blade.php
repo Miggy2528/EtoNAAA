@@ -86,12 +86,6 @@
                         </a>
                     </th>
                     <th scope="col" class="align-middle text-center">
-                        <a wire:click.prevent="sortBy('storage_location')" href="#" role="button">
-                            {{ __('Storage') }}
-                            @include('includes._sort-icon', ['field' => 'storage_location'])
-                        </a>
-                    </th>
-                    <th scope="col" class="align-middle text-center">
                         <a wire:click.prevent="sortBy('expiration_date')" href="#" role="button">
                             {{ __('Expires') }}
                             @include('includes._sort-icon', ['field' => 'expiration_date'])
@@ -125,9 +119,6 @@
                             /kg
                         @endif
                     </td>
-                    <td class="align-middle text-center">
-                        {{ $product->storage_location ?? 'N/A' }}
-                    </td>
                     <td class="align-middle text-center" {!! $product->expiration_date && $product->expiration_date->isPast() ? 'style="background-color: #f8d7da;"' : '' !!}>
                         {{ $product->expiration_date ? $product->expiration_date->format('M d, Y') : 'N/A' }}
                     </td>
@@ -141,7 +132,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td class="align-middle text-center" colspan="11">
+                    <td class="align-middle text-center" colspan="10">
                         No results found
                     </td>
                 </tr>

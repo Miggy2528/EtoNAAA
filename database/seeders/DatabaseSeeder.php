@@ -25,6 +25,8 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             StaffPerformanceSeeder::class, // Add Staff Performance Module
             StaffNotificationSeeder::class, // Add Staff Notification System
+            SupplierUserSeeder::class, // Add Supplier User Seeder
+            SupplierDummyDataSeeder::class, // Add Supplier Dummy Data
         ]);
 
         $orders = Order::factory(50)->create();

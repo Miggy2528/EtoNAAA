@@ -23,14 +23,9 @@ return new class extends Migration
                 ->after('quantity')
                 ->comment('Weight in kilograms');
             
-            $table->string('storage_location')
-                ->nullable()
-                ->after('weight_per_unit')
-                ->comment('Location in the storage/freezer');
-            
             $table->date('expiration_date')
                 ->nullable()
-                ->after('storage_location');
+                ->after('weight_per_unit');
         });
     }
 
@@ -43,7 +38,6 @@ return new class extends Migration
             $table->dropForeign(['meat_cut_id']);
             $table->dropColumn('meat_cut_id');
             $table->dropColumn('weight_per_unit');
-            $table->dropColumn('storage_location');
             $table->dropColumn('expiration_date');
         });
     }

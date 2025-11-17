@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Kyslik\ColumnSortable\Sortable;
+use App\Services\AuditTrailService;
 
 class Product extends Model
 {
-    use HasFactory, Sortable;
+    use HasFactory, SoftDeletes, Sortable;
 
     protected $fillable = [
         'name',
@@ -20,7 +22,6 @@ class Product extends Model
         'quantity',
         'price_per_kg',
         'selling_price',
-        'storage_location',
         'expiration_date',
         'source',
         'notes',
@@ -63,6 +64,26 @@ class Product extends Model
                     'quantity' => $product->quantity,
                 ]);
             }
+            
+            // Log creation in audit trail
+            AuditTrailService::logCreate($product, $product->toArray());
+        });
+        
+        static::updated(function ($product) {
+            // Log update in audit trail
+            $oldValues = $product->getOriginal();
+            $newValues = $product->getAttributes();
+            AuditTrailService::logUpdate($product, $oldValues, $newValues);
+        });
+        
+        static::deleted(function ($product) {
+            // Log deletion in audit trail
+            AuditTrailService::logDelete($product, $product->toArray());
+        });
+        
+        static::restored(function ($product) {
+            // Log restoration in audit trail
+            AuditTrailService::logRestore($product, $product->toArray());
         });
     }
     // Note: meatCut relationship removed as products table doesn't have meat_cut_id field

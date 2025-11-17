@@ -4,18 +4,22 @@ namespace App\Models;
 
 use App\Enums\SupplierType;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Services\AuditTrailService;
 
 class Supplier extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $guarded = [
         'id',
     ];
 
     protected $fillable = [
+        'user_id',
         'name',
         'email',
         'phone',
@@ -41,6 +45,11 @@ class Supplier extends Model
         'average_lead_time' => 'integer',
         'total_procurements' => 'integer',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function products(): HasMany
     {
@@ -120,5 +129,30 @@ class Supplier extends Model
             return round(($this->delivery_rating / 5) * 100, 2);
         }
         return 0.00;
+    }
+    
+    protected static function booted()
+    {
+        static::created(function ($supplier) {
+            // Log creation in audit trail
+            AuditTrailService::logCreate($supplier, $supplier->toArray());
+        });
+        
+        static::updated(function ($supplier) {
+            // Log update in audit trail
+            $oldValues = $supplier->getOriginal();
+            $newValues = $supplier->getAttributes();
+            AuditTrailService::logUpdate($supplier, $oldValues, $newValues);
+        });
+        
+        static::deleted(function ($supplier) {
+            // Log deletion in audit trail
+            AuditTrailService::logDelete($supplier, $supplier->toArray());
+        });
+        
+        static::restored(function ($supplier) {
+            // Log restoration in audit trail
+            AuditTrailService::logRestore($supplier, $supplier->toArray());
+        });
     }
 }

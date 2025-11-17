@@ -26,7 +26,10 @@ class CheckoutController extends Controller
             return redirect()->route('customer.cart')->with('error', 'Your cart is empty!');
         }
 
-        $cartSubtotal = Cart::instance('customer')->subtotal();
+        // Regenerate CSRF token to prevent 419 errors
+        request()->session()->regenerateToken();
+        
+        $cartSubtotal = str_replace(',', '', Cart::instance('customer')->subtotal());
         $customer = auth()->user();
 
         // Define barangays in Cabuyao, Laguna
@@ -166,8 +169,10 @@ class CheckoutController extends Controller
     
             DB::commit();
     
-            return redirect()->route('customer.orders')
-                ->with('success', 'Order placed successfully! Order #' . $order->invoice_no);
+            // Clear any old input to prevent 419 on refresh
+            session()->flash('success', 'Order placed successfully! Order #' . $order->invoice_no);
+            
+            return redirect()->route('customer.orders');
     
         } catch (\Exception $e) {
             DB::rollBack();

@@ -147,6 +147,36 @@
                 border-top: 2px solid rgba(255, 255, 255, 0.2) !important;
             }
             
+            .status-badge {
+                display: inline-block;
+                padding: 8px 20px;
+                border-radius: 25px;
+                font-weight: 600;
+                font-size: 14px;
+                letter-spacing: 0.5px;
+                text-transform: uppercase;
+            }
+            
+            .status-pending {
+                background-color: #fff3cd;
+                color: #856404;
+            }
+            
+            .status-for-delivery {
+                background-color: #cfe2ff;
+                color: #084298;
+            }
+            
+            .status-complete {
+                background-color: #d4edda;
+                color: #155724;
+            }
+            
+            .status-cancelled {
+                background-color: #f8d7da;
+                color: #721c24;
+            }
+            
             .payment-info-box {
                 background-color: var(--light-bg);
                 border-radius: 10px;
@@ -260,7 +290,19 @@
                                             <h2>
                                                 Invoice #<span class="text-danger">{{ $order->invoice_no }}</span>
                                             </h2>
-                                            <p class="text-muted">Date: {{ $order->created_at->timezone('Asia/Manila')->format('M d, Y g:i A') }}</p>
+                                            <p class="text-muted mb-2">Date: {{ $order->created_at->timezone('Asia/Manila')->format('M d, Y g:i A') }}</p>
+                                            @php
+                                                $statusClass = match($order->order_status) {
+                                                    \App\Enums\OrderStatus::PENDING => 'status-pending',
+                                                    \App\Enums\OrderStatus::FOR_DELIVERY => 'status-for-delivery',
+                                                    \App\Enums\OrderStatus::COMPLETE => 'status-complete',
+                                                    \App\Enums\OrderStatus::CANCELLED => 'status-cancelled',
+                                                    default => 'status-pending'
+                                                };
+                                            @endphp
+                                            <span class="status-badge {{ $statusClass }}">
+                                                {{ $order->order_status->label() }}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -280,14 +322,23 @@
                                             <p class="info-value">{{ $order->customer_email ?? $order->customer->email }}</p>
                                             <p class="info-value">{{ $order->delivery_address }}</p>
                                         </div>
+                                        
+                                        <div class="info-block mt-4">
+                                            <h5 class="info-label">Order Details:</h5>
+                                            <p class="info-value"><strong>Tracking Number:</strong> {{ $order->tracking_number }}</p>
+                                            @if($order->estimated_delivery)
+                                            <p class="info-value"><strong>Estimated Delivery:</strong> {{ \Carbon\Carbon::parse($order->estimated_delivery)->timezone('Asia/Manila')->format('M d, Y') }}</p>
+                                            @endif
+                                            <p class="info-value"><strong>Total Items:</strong> {{ $order->total_products }}</p>
+                                        </div>
                                     </div>
                                     <div class="col-md-6 text-end">
                                         <div class="info-block">
                                             <h5 class="info-label">From:</h5>
                                             <p class="info-value"><strong>Yannis Meat Shop</strong></p>
                                             <p class="info-value">+63 09082413347</p>
-                                            <p class="info-value">email@example.com</p>
-                                            <p class="info-value">Katapatn Rd, 17, Cabuyao City, 4025 Laguna</p>
+                                            <p class="info-value">YannisMeatshop@gmail.com</p>
+                                            <p class="info-value">Banay banay, 17 Aragon Compound, Cabuyao City, 4025 Laguna</p>
                                         </div>
                                     </div>
                                 </div>
@@ -308,17 +359,18 @@
                                         </thead>
 
                                         <tbody>
-{{--                                            @foreach ($orderDetails as $item)--}}
                                             @foreach ($order->details as $item)
                                             <tr>
                                                 <td class="align-middle">
-                                                    <strong>{{ $item->product->name }}</strong>
+                                                    <strong>{{ $item->product->name }}</strong><br>
+                                                    <small class="text-muted">Code: {{ $item->product->code }}</small>
                                                 </td>
                                                 <td class="align-middle text-center">
                                                     ₱{{ number_format($item->unitcost, 2) }}
+                                                    <small class="text-muted d-block">per {{ $item->product->unit->name ?? 'kg' }}</small>
                                                 </td>
                                                 <td class="align-middle text-center">
-                                                    {{ $item->quantity }}
+                                                    {{ $item->quantity }} {{ $item->product->unit->name ?? 'kg' }}
                                                 </td>
                                                 <td class="align-middle text-center">
                                                     ₱{{ number_format($item->total, 2) }}
@@ -404,7 +456,7 @@
                         </div>
                         
                         <!-- Print/Download Buttons -->
-                        <div class="invoice-btn-section clearfix d-print-none text-center mt-4">
+                        <div class="invoice-btn-section clearfix d-print-none text-center mt-4 mb-4">
                             <a href="javascript:window.print()" class="btn btn-lg btn-print">
                                 <i class="fa fa-print me-2"></i>Print Invoice
                             </a>

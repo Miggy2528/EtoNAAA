@@ -4,13 +4,15 @@ namespace App\Models;
 
 use App\Enums\PurchaseStatus;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Services\AuditTrailService;
 
 class Purchase extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $guarded = [
         'id',
@@ -58,5 +60,30 @@ class Purchase extends Model
         $query->where('purchase_no', 'like', "%{$value}%")
             ->orWhere('status', 'like', "%{$value}%")
         ;
+    }
+    
+    protected static function booted()
+    {
+        static::created(function ($purchase) {
+            // Log creation in audit trail
+            AuditTrailService::logCreate($purchase, $purchase->toArray());
+        });
+        
+        static::updated(function ($purchase) {
+            // Log update in audit trail
+            $oldValues = $purchase->getOriginal();
+            $newValues = $purchase->getAttributes();
+            AuditTrailService::logUpdate($purchase, $oldValues, $newValues);
+        });
+        
+        static::deleted(function ($purchase) {
+            // Log deletion in audit trail
+            AuditTrailService::logDelete($purchase, $purchase->toArray());
+        });
+        
+        static::restored(function ($purchase) {
+            // Log restoration in audit trail
+            AuditTrailService::logRestore($purchase, $purchase->toArray());
+        });
     }
 }

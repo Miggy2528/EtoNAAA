@@ -82,9 +82,9 @@ class PerformanceMonitoringService
             $config = $connection->getConfig();
             
             return [
-                'driver' => $config['driver'],
-                'host' => $config['host'],
-                'database' => $config['database'],
+                'driver' => $config['driver'] ?? 'unknown',
+                'host' => $config['host'] ?? 'localhost',
+                'database' => $config['database'] ?? 'unknown',
                 'charset' => $config['charset'] ?? 'utf8',
                 'collation' => $config['collation'] ?? 'utf8_unicode_ci'
             ];
@@ -112,7 +112,8 @@ class PerformanceMonitoringService
             
             return $stats;
         } catch (\Exception $e) {
-            return ['error' => $e->getMessage()];
+            // Return error as a separate key, not mixed with table data
+            return ['_error' => $e->getMessage()];
         }
     }
 

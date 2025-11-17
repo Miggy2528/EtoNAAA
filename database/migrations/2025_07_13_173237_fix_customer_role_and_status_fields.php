@@ -12,10 +12,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Set role to 'customer' where null or empty
-        DB::table('customers')->whereNull('role')->orWhere('role', '')->update(['role' => 'customer']);
-        // Set status to 'active' where null or empty
-        DB::table('customers')->whereNull('status')->orWhere('status', '')->update(['status' => 'active']);
+        // Only run if the role column exists
+        if (Schema::hasColumn('customers', 'role')) {
+            // Set role to 'customer' where null or empty
+            DB::table('customers')->whereNull('role')->orWhere('role', '')->update(['role' => 'customer']);
+        }
+        
+        // Only run if the status column exists
+        if (Schema::hasColumn('customers', 'status')) {
+            // Set status to 'active' where null or empty
+            DB::table('customers')->whereNull('status')->orWhere('status', '')->update(['status' => 'active']);
+        }
     }
 
     /**

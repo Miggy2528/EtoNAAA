@@ -36,6 +36,16 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // Role-based redirect - only admin and staff allowed
+        $user = Auth::user();
+        
+        // Double-check: ensure only admin/staff can access
+        if (!in_array($user->role, ['admin', 'staff'])) {
+            Auth::logout();
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Unauthorized access. Please use the appropriate login portal.']);
+        }
+        
         return redirect()->intended(RouteServiceProvider::HOME);
     }
 

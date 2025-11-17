@@ -6,6 +6,7 @@ use App\Models\Supplier;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use App\Http\Requests\Supplier\StoreSupplierRequest;
 use App\Http\Requests\Supplier\UpdateSupplierRequest;
@@ -21,7 +22,18 @@ class SupplierController extends Controller
 
     public function index()
     {
-        $suppliers = Supplier::latest()->paginate(10);
+        $suppliers = Supplier::withCount('procurements')
+            ->with(['procurements' => function($query) {
+                $query->selectRaw('supplier_id, 
+                    COUNT(*) as total_deliveries,
+                    SUM(total_cost) as total_spent,
+                    SUM(CASE WHEN status = "on-time" THEN 1 ELSE 0 END) as on_time_deliveries,
+                    AVG(defective_rate) as avg_defect_rate')
+                ->groupBy('supplier_id');
+            }])
+            ->latest()
+            ->paginate(10);
+            
         return view('suppliers.index', compact('suppliers'));
     }
 
@@ -50,7 +62,28 @@ class SupplierController extends Controller
     public function show(Supplier $supplier)
     {
         $products = $supplier->products;
-        return view('suppliers.show', compact('supplier', 'products'));
+        
+        // Get procurement statistics
+        $procurementStats = DB::table('procurements')
+            ->where('supplier_id', $supplier->id)
+            ->selectRaw('
+                COUNT(*) as total_procurements,
+                SUM(total_cost) as total_spent,
+                SUM(quantity_supplied) as total_quantity,
+                SUM(CASE WHEN status = "on-time" THEN 1 ELSE 0 END) as on_time_count,
+                AVG(defective_rate) as avg_defect_rate,
+                MAX(delivery_date) as last_delivery
+            ')
+            ->first();
+            
+        // Get recent procurements (last 10) with product and unit eager loaded
+        $recentProcurements = $supplier->procurements()
+            ->with(['product.unit'])
+            ->orderBy('delivery_date', 'desc')
+            ->limit(10)
+            ->get();
+            
+        return view('suppliers.show', compact('supplier', 'products', 'procurementStats', 'recentProcurements'));
     }
 
     public function edit(Supplier $supplier)

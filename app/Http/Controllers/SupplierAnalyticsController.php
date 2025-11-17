@@ -19,11 +19,22 @@ class SupplierAnalyticsController extends Controller
     {
         $suppliers = Supplier::withCount(['procurements', 'purchases'])->get();
         
-        $performanceData = $this->getSupplierPerformance();
-        $deliveryTracking = $this->getDeliveryTracking();
-        $procurementInsights = $this->getProcurementInsights();
-        $topSuppliers = $this->getTopSuppliers();
-        $monthlyTrends = $this->getMonthlyProcurementTrends();
+        // Generate dummy data if no real data exists
+        $hasProcurementData = Procurement::exists();
+        
+        if (!$hasProcurementData) {
+            $performanceData = $this->generateDummyPerformanceData();
+            $deliveryTracking = $this->generateDummyDeliveryTracking();
+            $procurementInsights = $this->generateDummyProcurementInsights();
+            $topSuppliers = $this->generateDummyTopSuppliers();
+            $monthlyTrends = $this->generateDummyMonthlyTrends();
+        } else {
+            $performanceData = $this->getSupplierPerformance();
+            $deliveryTracking = $this->getDeliveryTracking();
+            $procurementInsights = $this->getProcurementInsights();
+            $topSuppliers = $this->getTopSuppliers();
+            $monthlyTrends = $this->getMonthlyProcurementTrends();
+        }
         
         return view('reports.supplier-analytics', compact(
             'suppliers',
@@ -31,7 +42,8 @@ class SupplierAnalyticsController extends Controller
             'deliveryTracking',
             'procurementInsights',
             'topSuppliers',
-            'monthlyTrends'
+            'monthlyTrends',
+            'hasProcurementData'
         ));
     }
 
@@ -204,5 +216,151 @@ class SupplierAnalyticsController extends Controller
     {
         // TODO: Implement CSV/PDF export
         return redirect()->back()->with('info', 'Export feature coming soon!');
+    }
+
+    /**
+     * Generate dummy supplier performance data
+     */
+    private function generateDummyPerformanceData()
+    {
+        // Get actual suppliers from database
+        $suppliers = Supplier::take(4)->get();
+        
+        if ($suppliers->count() < 2) {
+            // Fallback to generic names if no suppliers exist
+            return collect([
+                [
+                    'supplier_id' => 1,
+                    'supplier_name' => 'Supplier 1',
+                    'total_deliveries' => 52,
+                    'on_time_deliveries' => 48,
+                    'on_time_rate' => 92.31,
+                    'avg_defective_rate' => 1.8,
+                    'total_cost' => 685000,
+                    'avg_delay_days' => 1.3,
+                    'performance_score' => 93.85,
+                ],
+                [
+                    'supplier_id' => 2,
+                    'supplier_name' => 'Supplier 2',
+                    'total_deliveries' => 46,
+                    'on_time_deliveries' => 43,
+                    'on_time_rate' => 93.48,
+                    'avg_defective_rate' => 1.5,
+                    'total_cost' => 598000,
+                    'avg_delay_days' => 1.1,
+                    'performance_score' => 95.12,
+                ],
+            ]);
+        }
+        
+        // Generate data for actual suppliers
+        $performanceData = [];
+        $costs = [685000, 598000, 425000, 375000];
+        $deliveries = [52, 46, 38, 32];
+        
+        foreach ($suppliers as $index => $supplier) {
+            $totalDeliveries = $deliveries[$index] ?? rand(30, 50);
+            $onTimeDeliveries = (int)($totalDeliveries * (rand(90, 95) / 100));
+            $onTimeRate = round(($onTimeDeliveries / $totalDeliveries) * 100, 2);
+            $defectiveRate = rand(10, 25) / 10;
+            
+            $performanceData[] = [
+                'supplier_id' => $supplier->id,
+                'supplier_name' => $supplier->name,
+                'total_deliveries' => $totalDeliveries,
+                'on_time_deliveries' => $onTimeDeliveries,
+                'on_time_rate' => $onTimeRate,
+                'avg_defective_rate' => $defectiveRate,
+                'total_cost' => $costs[$index] ?? rand(300000, 500000),
+                'avg_delay_days' => rand(10, 15) / 10,
+                'performance_score' => round($onTimeRate * 0.7 + (100 - $defectiveRate * 20) * 0.3, 2),
+            ];
+        }
+        
+        return collect($performanceData)->sortByDesc('performance_score')->values();
+    }
+
+    /**
+     * Generate dummy delivery tracking data
+     */
+    private function generateDummyDeliveryTracking()
+    {
+        return [
+            'on_time' => 91,
+            'delayed' => 7,
+            'total' => 98,
+            'on_time_percentage' => 92.86,
+            'delayed_percentage' => 7.14,
+        ];
+    }
+
+    /**
+     * Generate dummy procurement insights
+     */
+    private function generateDummyProcurementInsights()
+    {
+        return [
+            'total_cost' => 1283000,
+            'total_quantity' => 4850,
+            'avg_cost' => 13091.84,
+            'total_procurements' => 98,
+            'trend_percentage' => 8.5,
+            'trend_direction' => 'up',
+        ];
+    }
+
+    /**
+     * Generate dummy top suppliers data
+     */
+    private function generateDummyTopSuppliers()
+    {
+        // Get actual suppliers from database
+        $suppliers = Supplier::take(4)->get();
+        
+        if ($suppliers->isEmpty()) {
+            return collect([]);
+        }
+        
+        $costs = [685000, 598000, 425000, 375000];
+        $procurements = [52, 46, 38, 32];
+        $defectRates = [1.80, 1.50, 2.10, 1.90];
+        
+        $topSuppliersData = [];
+        foreach ($suppliers as $index => $supplier) {
+            $topSuppliersData[] = (object)[
+                'id' => $supplier->id,
+                'name' => $supplier->name,
+                'total_spent' => $costs[$index] ?? rand(300000, 500000),
+                'total_procurements' => $procurements[$index] ?? rand(30, 50),
+                'avg_defect_rate' => $defectRates[$index] ?? (rand(15, 25) / 10),
+            ];
+        }
+        
+        return collect($topSuppliersData)->sortByDesc('total_spent')->values();
+    }
+
+    /**
+     * Generate dummy monthly procurement trends (last 12 months)
+     */
+    private function generateDummyMonthlyTrends()
+    {
+        $trends = [];
+        $baseAmount = 95000; // Increased to align with yearly totals
+        
+        for ($i = 11; $i >= 0; $i--) {
+            $month = Carbon::now()->subMonths($i);
+            $variance = rand(-15000, 20000);
+            $amount = $baseAmount + $variance;
+            $procurementCount = rand(6, 12);
+            
+            $trends[] = [
+                'month' => $month->format('M Y'),
+                'total_cost' => $amount,
+                'procurement_count' => $procurementCount,
+            ];
+        }
+        
+        return collect($trends);
     }
 }

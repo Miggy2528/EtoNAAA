@@ -46,7 +46,7 @@ class StaffPerformanceSeeder extends Seeder
         // Create sample performance data for the last 3 months
         foreach ($staff as $staffMember) {
             for ($i = 0; $i < 3; $i++) {
-                $month = now()->subMonths($i)->format('Y-m');
+                $month = now()->subMonths($i)->startOfMonth();
                 
                 StaffPerformance::create([
                     'staff_id' => $staffMember->id,

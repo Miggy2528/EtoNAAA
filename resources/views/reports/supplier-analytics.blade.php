@@ -32,6 +32,20 @@
         </div>
     </div>
 
+    @if(!$hasProcurementData)
+    <!-- Simulated Data Notice -->
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-info-circle fa-2x me-3"></i>
+            <div>
+                <h4 class="alert-heading mb-1">Preview Mode - Simulated Data</h4>
+                <p class="mb-0">No actual procurement records found. The analytics shown below are simulated examples for two suppliers: <strong>Manila Premium Meat Suppliers</strong> and <strong>Laguna Fresh Meat Distributors</strong>. Start recording procurements to see real analytics.</p>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    @endif
+
     <!-- Summary Cards -->
     <div class="row mb-4">
         <div class="col-md-3">

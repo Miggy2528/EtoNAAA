@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Enums\OrderStatus;
 
 
-
 class Customer extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
@@ -32,6 +31,9 @@ class Customer extends Authenticatable
         'role',
         'email_verified_at',
         'last_login_at',
+        'account_holder',
+        'account_number',
+        'bank_name',
     ];
 
     protected $hidden = [

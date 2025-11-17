@@ -27,7 +27,11 @@
                                 {{ __('Product Image') }}
                             </h3>
 
-                            <img class="img-account-profile mb-2" src="{{ $product->product_image ? asset('storage/products/' . $product->product_image) : asset('assets/img/products/default.webp') }}" alt="{{ $product->name }}" id="image-preview" />
+                            <img class="img-account-profile mb-2" 
+                                 src="{{ $product->product_image ? asset('storage/products/' . $product->product_image) : asset('assets/img/products/default.webp') }}" 
+                                 alt="{{ $product->name }}" 
+                                 id="image-preview" 
+                                 style="width: 100%; height: auto; max-height: 400px; object-fit: contain; border: 1px solid #dee2e6; padding: 10px; border-radius: 8px; background-color: #fff;" />
                         </div>
                     </div>
                 </div>
@@ -92,11 +96,6 @@
                                             </span>
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td class="text-dark">Storage Location</td>
-                                        <td class="text-dark">{{ $product->storage_location ?? 'N/A' }}</td>
-                                    </tr>
-
                                     <tr>
                                         <td class="text-dark">Buying Prices</td>
                                         <td class="text-dark">{{ $product->buying_price }}</td>

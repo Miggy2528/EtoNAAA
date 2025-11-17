@@ -62,6 +62,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === 'customer';
     }
 
+    public function isSupplier(): bool
+    {
+        return $this->role === 'supplier';
+    }
+
     // Status checking methods
     public function isActive(): bool
     {
@@ -82,6 +87,12 @@ class User extends Authenticatable implements MustVerifyEmail
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    // Supplier relationship
+    public function supplier()
+    {
+        return $this->hasOne(Supplier::class);
     }
 
     // Staff relationships

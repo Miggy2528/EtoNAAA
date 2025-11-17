@@ -94,7 +94,7 @@
                         {{ $purchase->date->format('d-m-Y') }}
                     </td>
                     <td class="align-middle text-center">
-                        {{ Number::currency($purchase->total_amount, 'EUR') }}
+€{{ number_format($purchase->total_amount, 2) }}
                     </td>
 
                     @if ($purchase->status === \App\Enums\PurchaseStatus::APPROVED)

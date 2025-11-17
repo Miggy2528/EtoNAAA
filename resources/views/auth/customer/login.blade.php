@@ -63,7 +63,7 @@
     </p>
     
     <p class="mt-2">
-        <a href="{{ route('password.request') }}" class="text-sm text-gray-500 hover:text-gray-700 focus:outline-none focus:underline">
+        <a href="{{ route('customer.password.request') }}" class="text-sm text-gray-500 hover:text-gray-700 focus:outline-none focus:underline">
             Forgot your password?
         </a>
     </p>

@@ -90,9 +90,9 @@
                         <img src="{{ asset('storage/products/' . $product->product_image) }}" 
                              alt="{{ $product->name }}" 
                              class="card-img-top" 
-                             style="object-fit:cover;max-height:180px;">
+                             style="object-fit:cover;height:200px;width:100%;">
                     @else
-                        <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height:180px;">
+                        <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height:200px;">
                             <i class="fas fa-image fa-3x text-muted"></i>
                         </div>
                     @endif

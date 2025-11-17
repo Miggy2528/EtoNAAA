@@ -14,6 +14,7 @@ use App\Http\Controllers\Product\ProductController;
 use App\Http\Controllers\Purchase\PurchaseController;
 use App\Http\Controllers\Order\OrderPendingController;
 use App\Http\Controllers\Order\OrderCompleteController;
+use App\Http\Controllers\Order\OrderForDeliveryController;
 use App\Http\Controllers\Dashboards\DashboardController;
 use App\Http\Controllers\Product\ProductExportController;
 use App\Http\Controllers\Product\ProductImportController;
@@ -52,6 +53,10 @@ Route::get('test-deactivate', function () {
 Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
+
+Route::get('/customer/landing', function () {
+    return view('customer.landing');
+})->name('customer.landing');
 
 Route::get('/dashboard', function () {
     return redirect()->route('login');
@@ -135,6 +140,32 @@ Route::middleware(['auth:web_customer'])->group(function () {
 });
 
 // ============================================================================
+// SUPPLIER ROUTES
+// ============================================================================
+
+// Supplier Authentication Routes - GUEST ONLY
+Route::middleware('guest:web')->group(function () {
+    Route::get('/supplier/login', [App\Http\Controllers\Supplier\SupplierAuthController::class, 'showLoginForm'])->name('supplier.login');
+    Route::post('/supplier/login', [App\Http\Controllers\Supplier\SupplierAuthController::class, 'login'])->name('supplier.login.store');
+    Route::get('/supplier/register', [App\Http\Controllers\Supplier\SupplierAuthController::class, 'showRegistrationForm'])->name('supplier.register');
+    Route::post('/supplier/register', [App\Http\Controllers\Supplier\SupplierAuthController::class, 'register'])->name('supplier.register.store');
+});
+
+// Supplier Protected Routes - AUTHENTICATED + ROLE CHECK
+Route::middleware(['auth:web', 'role:supplier'])->prefix('supplier')->name('supplier.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Supplier\DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/logout', [App\Http\Controllers\Supplier\SupplierAuthController::class, 'logout'])->name('logout');
+    
+    // Supplier Purchases
+    Route::get('/purchases', [App\Http\Controllers\Supplier\PurchaseController::class, 'index'])->name('purchases.index');
+    Route::get('/purchases/{id}', [App\Http\Controllers\Supplier\PurchaseController::class, 'show'])->name('purchases.show');
+    
+    // Supplier Deliveries/Procurements
+    Route::get('/deliveries', [App\Http\Controllers\Supplier\DeliveryController::class, 'index'])->name('deliveries.index');
+    Route::get('/deliveries/{id}', [App\Http\Controllers\Supplier\DeliveryController::class, 'show'])->name('deliveries.show');
+});
+
+// ============================================================================
 // STAFF/ADMIN ROUTES
 // ============================================================================
 
@@ -192,6 +223,7 @@ Route::middleware(['auth:web'])->group(function () {
         
         // Order Management
         Route::get('/orders/pending', OrderPendingController::class)->name('orders.pending');
+        Route::get('/orders/for-delivery', OrderForDeliveryController::class)->name('orders.for-delivery');
         Route::get('/orders/complete', OrderCompleteController::class)->name('orders.complete');
         Route::post('/invoice/create', [InvoiceController::class, 'create'])->name('invoice.create');
     });
@@ -231,6 +263,7 @@ Route::middleware(['auth:web'])->group(function () {
     //  Order Status Update
 Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
 Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+Route::post('/admin/orders/{order}/status', [OrderController::class, 'updateOrderStatus'])->name('orders.updateOrderStatus');
 
     // DUES
     Route::get('/due/orders/', [DueOrderController::class, 'index'])->name('due.index');
@@ -276,10 +309,30 @@ Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name(
         Route::post('/reports/sales-analytics/store-2025', [\App\Http\Controllers\SalesAnalyticsController::class, 'store2025'])->name('reports.sales.analytics.store-2025');
         Route::get('/reports/sales-analytics/export-pdf', [\App\Http\Controllers\SalesAnalyticsController::class, 'exportPDF'])->name('reports.sales.analytics.export-pdf');
         Route::get('/reports/sales-analytics/export-csv', [\App\Http\Controllers\SalesAnalyticsController::class, 'exportCSV'])->name('reports.sales.analytics.export-csv');
+        Route::get('/reports/sales-analytics/monthly-details', [\App\Http\Controllers\SalesAnalyticsController::class, 'getMonthlyDetails'])->name('reports.sales.analytics.monthly-details');
         
         // Supplier Analytics Routes
         Route::get('/reports/supplier-analytics', [\App\Http\Controllers\SupplierAnalyticsController::class, 'index'])->name('reports.supplier.analytics');
         Route::get('/reports/supplier-analytics/export', [\App\Http\Controllers\SupplierAnalyticsController::class, 'export'])->name('reports.supplier.analytics.export');
+        
+        // Expense Management Routes
+        Route::prefix('expenses')->name('expenses.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\ExpenseController::class, 'index'])->name('index');
+            
+            // Utility Expenses
+            Route::resource('utilities', \App\Http\Controllers\UtilityExpenseController::class);
+            Route::post('utilities/{utilityExpense}/mark-paid', [\App\Http\Controllers\UtilityExpenseController::class, 'markAsPaid'])->name('utilities.mark-paid');
+            
+            // Payroll
+            Route::resource('payroll', \App\Http\Controllers\PayrollController::class);
+            Route::post('payroll/{payrollRecord}/mark-paid', [\App\Http\Controllers\PayrollController::class, 'markAsPaid'])->name('payroll.mark-paid');
+            Route::get('payroll/generate/{year}/{month}', [\App\Http\Controllers\PayrollController::class, 'generateMonthly'])->name('payroll.generate');
+            
+            // Other Expenses
+            Route::resource('other', \App\Http\Controllers\OtherExpenseController::class);
+        });
+        
+
         
         // Legacy Sales Analytics Routes (redirects)
         Route::get('/sales-analytics', [\App\Http\Controllers\SalesAnalyticsController::class, 'index'])->name('sales-analytics.index');

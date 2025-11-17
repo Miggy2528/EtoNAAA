@@ -535,7 +535,7 @@
                         @endforeach
 
                         <div class="summary-item">
-                            <span>Subtotal ({{ $cartItems->count() }} items):</span>
+                            <span>Subtotal ({{ $cartItems->sum('qty') }} {{ $cartItems->sum('qty') > 1 ? 'items' : 'item' }}):</span>
                             <span>₱{{ number_format($cartSubtotal, 2) }}</span>
                         </div>
                         <div class="summary-total">

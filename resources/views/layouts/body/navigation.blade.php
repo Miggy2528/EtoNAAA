@@ -1,7 +1,7 @@
 <nav class="navbar navbar-expand navbar-light bg-white shadow-sm">
     <div class="container-xl">
         <!-- Brand -->
-        <a class="navbar-brand fw-bold fs-4 text-danger" href="{{ route('dashboard') }}">
+        <a class="navbar-brand fw-bold fs-4 text-danger" wire:navigate href="{{ route('dashboard') }}">
     Yanni's Meat Shop
 </a>
 
@@ -13,10 +13,10 @@
         <div class="collapse navbar-collapse" id="navbar-menu">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('orders.index') }}">Orders</a>
+                    <a class="nav-link" wire:navigate href="{{ route('orders.index') }}">Orders</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('products.index') }}">Products</a>
+                    <a class="nav-link" wire:navigate href="{{ route('products.index') }}">Products</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('logout') }}"

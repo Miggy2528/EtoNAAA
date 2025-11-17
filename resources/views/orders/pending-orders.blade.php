@@ -1,5 +1,37 @@
 @extends('layouts.butcher')
 
+@push('page-styles')
+<style>
+    .status-badge {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .status-for-delivery {
+        background-color: #cfe2ff;
+        color: #084298;
+    }
+
+    .status-complete {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .status-cancelled {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="page-body">
     @include('partials.session')
@@ -66,14 +98,18 @@
                             <td class="text-center">{{ $order->customer->name }}</td>
                             <td class="text-center">{{ $order->created_at->timezone('Asia/Manila')->format('d-m-Y g:i A') }}</td>
                             <td class="text-center">{{ $order->payment_type }}</td>
-                            <td class="text-center">{{ Number::currency($order->total, 'PHP') }}</td>
+                            <td class="text-center">₱{{ number_format($order->total, 2) }}</td>
                             <td class="text-center">
                                 <span class="badge bg-orange text-white text-uppercase">
                                     {{ \App\Enums\OrderStatus::PENDING->label() }}
                                 </span>
                             </td>
                             <td class="text-center">
-                                <a href="{{ route('orders.show', $order) }}" class="btn btn-icon btn-outline-success">
+                                <!-- Action Buttons -->
+                                <button class="btn btn-danger btn-sm" onclick="updateStatus({{ $order->id }}, 'Cancelled')">Cancel</button>
+                                <button class="btn btn-warning btn-sm" onclick="updateStatus({{ $order->id }}, 'For Delivery')">For Delivery</button>
+                                
+                                <a href="{{ route('orders.show', $order) }}" class="btn btn-icon btn-outline-info ms-1">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-eye" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" /></svg>
                                 </a>
                             </td>
@@ -89,4 +125,34 @@
     </div>
    @endif
 </div>
+
+<script>
+    function updateStatus(orderId, status) {
+        if (!confirm(`Are you sure you want to mark this order as ${status}?`)) {
+            return;
+        }
+        
+        fetch(`/admin/orders/${orderId}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ status })
+        }).then(res => res.json()).then(data => {
+            if(data.success) {
+                // Show success message
+                alert(data.message);
+                // Reload the page to reflect changes
+                location.reload();
+            } else {
+                // Show error message
+                alert('Error: ' + data.message);
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the order status.');
+        });
+    }
+</script>
 @endsection

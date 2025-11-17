@@ -43,7 +43,6 @@ class ProductCodeGenerationTest extends TestCase
             'meat_cut_id' => $meatCut->id,
             'quantity' => 10,
             'price_per_kg' => 200,
-            'storage_location' => 'Freezer 1',
             'expiration_date' => '2025-12-31',
             'source' => 'Local Farm',
             'notes' => 'Fresh chicken wings',

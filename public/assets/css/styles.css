@@ -20215,6 +20215,10 @@ body {
 
 .img-account-profile {
   height: 10rem;
+  width: 100%;
+  object-fit: contain;
+  border-radius: 0.5rem;
+  background-color: #f8f9fa;
 }
 
 .cc-color-visa {

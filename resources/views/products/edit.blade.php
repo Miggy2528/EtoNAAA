@@ -35,6 +35,8 @@
                                     class="img-account-profile mb-2"
                                     src="{{ $product->product_image ? asset('storage/products/'.$product->product_image) : asset('assets/img/products/default.webp') }}"
                                     id="image-preview"
+                                    alt="{{ $product->name }}"
+                                    style="width: 100%; height: auto; max-height: 400px; object-fit: contain; border: 1px solid #dee2e6; padding: 10px; border-radius: 8px; background-color: #fff;"
                                 >
 
                                 <div class="small font-italic text-muted mb-2">
@@ -289,30 +291,6 @@
                                                    placeholder="e.g., Local Farm"
                                                    value="{{ old('source', $product->source) }}">
                                             @error('source')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-                                    </div>
-
-                                    {{-- Storage Location --}}
-                                    <div class="col-sm-6 col-md-6">
-                                        <div class="mb-3">
-                                            <label for="storage_location" class="form-label">Storage Location</label>
-                                            <select name="storage_location" id="storage_location"
-                                                    class="form-select @error('storage_location') is-invalid @enderror">
-                                                <option selected disabled>Select a storage location:</option>
-                                                <option value="Freezer 1" {{ old('storage_location', $product->storage_location) == 'Freezer 1' ? 'selected' : '' }}>Freezer 1</option>
-                                                <option value="Freezer 2" {{ old('storage_location', $product->storage_location) == 'Freezer 2' ? 'selected' : '' }}>Freezer 2</option>
-                                                <option value="Freezer 3" {{ old('storage_location', $product->storage_location) == 'Freezer 3' ? 'selected' : '' }}>Freezer 3</option>
-                                                <option value="Freezer 4" {{ old('storage_location', $product->storage_location) == 'Freezer 4' ? 'selected' : '' }}>Freezer 4</option>
-                                                <option value="Freezer 5" {{ old('storage_location', $product->storage_location) == 'Freezer 5' ? 'selected' : '' }}>Freezer 5</option>
-                                                <option value="Shelf 1" {{ old('storage_location', $product->storage_location) == 'Shelf 1' ? 'selected' : '' }}>Shelf 1</option>
-                                                <option value="Shelf 2" {{ old('storage_location', $product->storage_location) == 'Shelf 2' ? 'selected' : '' }}>Shelf 2</option>
-                                                <option value="Shelf 3" {{ old('storage_location', $product->storage_location) == 'Shelf 3' ? 'selected' : '' }}>Shelf 3</option>
-                                                <option value="Shelf 4" {{ old('storage_location', $product->storage_location) == 'Shelf 4' ? 'selected' : '' }}>Shelf 4</option>
-                                                <option value="Shelf 5" {{ old('storage_location', $product->storage_location) == 'Shelf 5' ? 'selected' : '' }}>Shelf 5</option>
-                                            </select>
-                                            @error('storage_location')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                             @enderror
                                         </div>

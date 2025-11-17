@@ -64,7 +64,7 @@ class OrderTable extends Component
 
         return view('livewire.tables.order-table', [
             'orders' => $query
-                ->orderByRaw("CASE order_status WHEN 'pending' THEN 1 WHEN 'complete' THEN 2 WHEN 'cancelled' THEN 3 ELSE 4 END")
+                ->orderByRaw("CASE order_status WHEN 'pending' THEN 1 WHEN 'for_delivery' THEN 2 WHEN 'complete' THEN 3 WHEN 'cancelled' THEN 4 ELSE 5 END")
                 ->orderBy($this->sortField, $this->sortAsc ? 'asc' : 'desc')
                 ->paginate($this->perPage),
         ]);

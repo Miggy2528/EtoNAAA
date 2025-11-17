@@ -28,7 +28,12 @@ class RedirectIfAuthenticated
                     return redirect()->route('customer.dashboard');
                 }
                 
-                // For regular users, redirect to main dashboard
+                // If it's a supplier (User model with supplier role), redirect to supplier dashboard
+                if ($user instanceof \App\Models\User && $user->role === 'supplier') {
+                    return redirect()->route('supplier.dashboard');
+                }
+                
+                // For regular users (admin/staff), redirect to main dashboard
                 return redirect(RouteServiceProvider::HOME);
             }
         }

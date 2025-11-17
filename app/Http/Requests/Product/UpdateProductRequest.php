@@ -37,7 +37,6 @@ class UpdateProductRequest extends FormRequest
             'buying_price'      => 'required|numeric|min:0',
             'selling_price'     => 'required|numeric|min:0',
             'quantity_alert'    => 'required|integer',
-            'storage_location'  => 'required|string',
             'expiration_date'   => 'required|date|after:today',
             'source'            => 'required|string',
             'notes'             => 'nullable|max:1000'

@@ -36,7 +36,7 @@ class RegisteredUserController extends Controller
             'username' => ['required', 'string', 'max:255', 'unique:' . User::class, 'alpha_dash:ascii'],
             'email' => ['required', 'string', 'email', 'max:255', new UniqueEmailAcrossTables],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'string', 'in:admin,staff'],
+            'role' => ['required', 'string', 'in:admin,staff,supplier'],
             'terms-of-service' => ['required']
         ]);
 
@@ -53,6 +53,10 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(RouteServiceProvider::HOME);
+        // Role-based redirect after registration
+        return match($user->role) {
+            'supplier' => redirect()->route('supplier.dashboard'),
+            default => redirect(RouteServiceProvider::HOME),
+        };
     }
 }

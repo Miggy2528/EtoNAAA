@@ -8,6 +8,35 @@
         transition: all 0.2s ease-in-out;
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
+    
+    .status-badge {
+        font-size: 0.95rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        display: inline-block;
+    }
+
+    .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .status-for-delivery {
+        background-color: #cfe2ff;
+        color: #084298;
+    }
+
+    .status-complete {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .status-cancelled {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
 </style>
 @endpush
 
@@ -44,25 +73,7 @@
         <div class="card shadow-sm">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="card-title">{{ __('Order Summary') }}</h3>
-                <div class="d-flex gap-2">
-                    @if ($order->order_status === \App\Enums\OrderStatus::PENDING)
-                        <form action="{{ route('orders.update', $order) }}" method="POST">
-                            @csrf
-                            @method('put')       
-                        </form>
-                        
-                        <!-- Cancel Order Button (Admin Only) -->
-                        @if(auth()->user()->isAdmin())
-                        <button type="button" 
-                                class="btn btn-warning btn-sm" 
-                                data-bs-toggle="modal" 
-                                data-bs-target="#cancelOrderModal">
-                            <i class="ti ti-x me-1"></i>Cancel Order
-                        </button>
-                        @endif
-                    @endif
-                    <x-action.close route="{{ route('orders.index') }}"/>
-                </div>
+                <x-action.close route="{{ route('orders.index') }}"/>
             </div>
 
             <div class="card-body">
@@ -79,11 +90,20 @@
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label">{{ __('Status') }}</label>
-                        <span class="badge bg-{{ $order->order_status === \App\Enums\OrderStatus::PENDING ? 'warning' : 'success' }}">
-                        {{ ucfirst($order->order_status->value) }}
-
-
-                        </span>
+                        <div>
+                            @php
+                                $statusClass = match($order->order_status) {
+                                    \App\Enums\OrderStatus::PENDING => 'status-pending',
+                                    \App\Enums\OrderStatus::FOR_DELIVERY => 'status-for-delivery',
+                                    \App\Enums\OrderStatus::COMPLETE => 'status-complete',
+                                    \App\Enums\OrderStatus::CANCELLED => 'status-cancelled',
+                                    default => 'status-pending'
+                                };
+                            @endphp
+                            <span class="badge status-badge {{ $statusClass }}">
+                                {{ $order->order_status->label() }}
+                            </span>
+                        </div>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label class="form-label">{{ __('Customer Account') }}</label>
@@ -250,14 +270,42 @@
 
             {{-- Footer Action --}}
             @if ($order->order_status === \App\Enums\OrderStatus::PENDING)
-            <div class="card-footer text-end">
-                <form action="{{ route('orders.update', $order) }}" method="POST">
-                    @method('put')
-                    @csrf
-                    <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to complete this order?')">
-                        Complete Order
-                    </button>
-                </form>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted">
+                        <i class="ti ti-info-circle me-1"></i>
+                        Update order status using the buttons below
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-danger btn-sm" onclick="updateStatus({{ $order->id }}, 'Cancelled')">
+                            <i class="ti ti-x me-1"></i>Cancel
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="updateStatus({{ $order->id }}, 'For Delivery')">
+                            <i class="ti ti-truck me-1"></i>For Delivery
+                        </button>
+                        <button class="btn btn-success btn-sm" onclick="updateStatus({{ $order->id }}, 'Completed')">
+                            <i class="ti ti-check me-1"></i>Complete Order
+                        </button>
+                    </div>
+                </div>
+            </div>
+            @endif
+            @if ($order->order_status === \App\Enums\OrderStatus::FOR_DELIVERY)
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted">
+                        <i class="ti ti-info-circle me-1"></i>
+                        Order is out for delivery. Complete when finished.
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-danger btn-sm" onclick="updateStatus({{ $order->id }}, 'Cancelled')">
+                            <i class="ti ti-x me-1"></i>Cancel
+                        </button>
+                        <button class="btn btn-success btn-sm" onclick="updateStatus({{ $order->id }}, 'Completed')">
+                            <i class="ti ti-check me-1"></i>Complete Order
+                        </button>
+                    </div>
+                </div>
             </div>
             @endif
         </div>
@@ -411,4 +459,31 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 @endif
+
+<script>
+    function updateStatus(orderId, status) {
+        if (!confirm(`Are you sure you want to mark this order as ${status}?`)) {
+            return;
+        }
+        
+        fetch(`/admin/orders/${orderId}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ status })
+        }).then(res => res.json()).then(data => {
+            if(data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        }).catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the order status.');
+        });
+    }
+</script>
 @endsection

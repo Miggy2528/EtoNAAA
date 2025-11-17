@@ -20,78 +20,6 @@
         </div>
     </div>
 
-    <!-- Quick Stats Overview -->
-    <div class="row mb-4" id="quickStats">
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-primary text-white avatar">
-                                <i class="fas fa-boxes"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="font-weight-medium" id="totalItems">Loading...</div>
-                            <div class="text-muted">Total Products</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-success text-white avatar">
-                                <i class="fas fa-chart-line"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="font-weight-medium" id="totalSales">Loading...</div>
-                            <div class="text-muted">Total Sales</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-warning text-white avatar">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="font-weight-medium" id="lowStockItems">Loading...</div>
-                            <div class="text-muted">Low Stock Items</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-info text-white avatar">
-                                <i class="fas fa-users"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <div class="font-weight-medium" id="totalStaff">Loading...</div>
-                            <div class="text-muted">Total Staff</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Report Cards -->
     <div class="row">
         <!-- Inventory Analytics -->
@@ -113,9 +41,6 @@
                         <a href="{{ route('reports.inventory') }}" class="btn btn-primary">
                             <i class="fas fa-chart-bar"></i> View Report
                         </a>
-                        <button onclick="loadInventoryData()" class="btn btn-outline-primary">
-                            <i class="fas fa-sync-alt"></i> Refresh
-                        </button>
                     </div>
                 </div>
             </div>
@@ -140,9 +65,6 @@
                         <a href="{{ route('reports.sales.analytics') }}" class="btn btn-success">
                             <i class="fas fa-chart-bar"></i> View Analytics
                         </a>
-                        <a href="{{ route('reports.sales') }}" class="btn btn-outline-success">
-                            <i class="fas fa-file-alt"></i> Old Report
-                        </a>
                     </div>
                 </div>
             </div>
@@ -166,9 +88,6 @@
                     <div class="mt-3">
                         <a href="{{ route('reports.supplier.analytics') }}" class="btn btn-warning">
                             <i class="fas fa-chart-bar"></i> View Analytics
-                        </a>
-                        <a href="{{ route('reports.purchases') }}" class="btn btn-outline-warning">
-                            <i class="fas fa-file-alt"></i> Old Report
                         </a>
                     </div>
                 </div>
@@ -201,136 +120,8 @@
                 </div>
             </div>
         </div>
+        
 
-        <!-- API Endpoints Info -->
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-secondary text-white avatar">
-                                <i class="fas fa-code"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <h5 class="card-title">API Endpoints</h5>
-                            <p class="card-text">Access analytics data via REST API for external integrations.</p>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <button onclick="showApiEndpoints()" class="btn btn-secondary">
-                            <i class="fas fa-info-circle"></i> View Endpoints
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Export Options -->
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-dark text-white avatar">
-                                <i class="fas fa-download"></i>
-                            </span>
-                        </div>
-                        <div class="col">
-                            <h5 class="card-title">Export Data</h5>
-                            <p class="card-text">Export analytics data in various formats for external use.</p>
-                        </div>
-                    </div>
-                    <div class="mt-3">
-                        <button onclick="exportAllData()" class="btn btn-dark">
-                            <i class="fas fa-file-export"></i> Export All
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Real-time Data Display -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Live Analytics Data</h3>
-                    <div class="card-actions">
-                        <span class="badge bg-success" id="lastUpdated">Last updated: Never</span>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="row" id="liveData">
-                        <div class="col-12 text-center">
-                            <div class="spinner-border" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p class="mt-2">Loading analytics data...</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- API Endpoints Modal -->
-<div class="modal fade" id="apiEndpointsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Analytics API Endpoints</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Endpoint</th>
-                                <th>Method</th>
-                                <th>Description</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><code>/api/analytics/inventory</code></td>
-                                <td><span class="badge bg-primary">GET</span></td>
-                                <td>Inventory analytics and stock levels</td>
-                                <td><button onclick="testEndpoint('/api/analytics/inventory')" class="btn btn-sm btn-outline-primary">Test</button></td>
-                            </tr>
-                            <tr>
-                                <td><code>/api/analytics/sales</code></td>
-                                <td><span class="badge bg-primary">GET</span></td>
-                                <td>Sales performance and trends</td>
-                                <td><button onclick="testEndpoint('/api/analytics/sales')" class="btn btn-sm btn-outline-primary">Test</button></td>
-                            </tr>
-                            <tr>
-                                <td><code>/api/analytics/suppliers</code></td>
-                                <td><span class="badge bg-primary">GET</span></td>
-                                <td>Supplier performance analytics</td>
-                                <td><button onclick="testEndpoint('/api/analytics/suppliers')" class="btn btn-sm btn-outline-primary">Test</button></td>
-                            </tr>
-                            <tr>
-                                <td><code>/api/analytics/staff</code></td>
-                                <td><span class="badge bg-primary">GET</span></td>
-                                <td>Staff performance metrics</td>
-                                <td><button onclick="testEndpoint('/api/analytics/staff')" class="btn btn-sm btn-outline-primary">Test</button></td>
-                            </tr>
-                            <tr>
-                                <td><code>/api/analytics/dashboard</code></td>
-                                <td><span class="badge bg-primary">GET</span></td>
-                                <td>Combined analytics data</td>
-                                <td><button onclick="testEndpoint('/api/analytics/dashboard')" class="btn btn-sm btn-outline-primary">Test</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 @endsection
@@ -356,8 +147,6 @@ async function loadAllData() {
         
         if (data.status === 'success') {
             analyticsData = data.data;
-            updateQuickStats();
-            updateLiveData();
             updateLastUpdated();
         } else {
             console.error('Failed to load analytics data:', data.message);
@@ -367,58 +156,9 @@ async function loadAllData() {
     }
 }
 
-// Update quick stats
-function updateQuickStats() {
-    if (analyticsData.inventory) {
-        document.getElementById('totalItems').textContent = analyticsData.inventory.total_items || 0;
-        document.getElementById('lowStockItems').textContent = analyticsData.inventory.low_stock_items || 0;
-    }
-    
-    if (analyticsData.sales) {
-        const totalSales = analyticsData.sales.total_sales || 0;
-        document.getElementById('totalSales').textContent = '₱' + totalSales.toLocaleString();
-    }
-    
-    if (analyticsData.staff) {
-        document.getElementById('totalStaff').textContent = analyticsData.staff.total_staff || 0;
-    }
-}
-
-// Update live data display
-function updateLiveData() {
-    const liveDataContainer = document.getElementById('liveData');
-    
-    if (!analyticsData.inventory || !analyticsData.sales) {
-        liveDataContainer.innerHTML = '<div class="col-12 text-center"><p class="text-muted">No data available</p></div>';
-        return;
-    }
-    
-    liveDataContainer.innerHTML = `
-        <div class="col-md-6">
-            <h5>Top Selling Product</h5>
-            <p class="h3 text-success">${analyticsData.sales.top_product || 'No data'}</p>
-            <small class="text-muted">Quantity sold: ${analyticsData.sales.top_product_quantity || 0}</small>
-        </div>
-        <div class="col-md-6">
-            <h5>Most Active Supplier</h5>
-            <p class="h3 text-warning">${analyticsData.suppliers?.most_frequent_supplier || 'No data'}</p>
-            <small class="text-muted">Deliveries: ${analyticsData.suppliers?.most_frequent_supplier_count || 0}</small>
-        </div>
-        <div class="col-md-6 mt-3">
-            <h5>Average Daily Sales</h5>
-            <p class="h3 text-primary">₱${(analyticsData.sales.average_daily_sales || 0).toLocaleString()}</p>
-        </div>
-        <div class="col-md-6 mt-3">
-            <h5>Soon to Expire Items</h5>
-            <p class="h3 text-danger">${analyticsData.inventory.soon_to_expire_items || 0}</p>
-        </div>
-    `;
-}
-
 // Update last updated timestamp
 function updateLastUpdated() {
-    const now = new Date();
-    document.getElementById('lastUpdated').textContent = `Last updated: ${now.toLocaleTimeString()}`;
+    // This function is kept for future use but does nothing since the element was removed
 }
 
 // Individual data loading functions
@@ -428,8 +168,6 @@ async function loadInventoryData() {
         const data = await response.json();
         if (data.status === 'success') {
             analyticsData.inventory = data.data;
-            updateQuickStats();
-            updateLiveData();
         }
     } catch (error) {
         console.error('Error loading inventory data:', error);
@@ -442,8 +180,6 @@ async function loadSalesData() {
         const data = await response.json();
         if (data.status === 'success') {
             analyticsData.sales = data.data;
-            updateQuickStats();
-            updateLiveData();
         }
     } catch (error) {
         console.error('Error loading sales data:', error);
@@ -456,7 +192,6 @@ async function loadSupplierData() {
         const data = await response.json();
         if (data.status === 'success') {
             analyticsData.suppliers = data.data;
-            updateLiveData();
         }
     } catch (error) {
         console.error('Error loading supplier data:', error);
@@ -469,7 +204,6 @@ async function loadStaffData() {
         const data = await response.json();
         if (data.status === 'success') {
             analyticsData.staff = data.data;
-            updateQuickStats();
         }
     } catch (error) {
         console.error('Error loading staff data:', error);

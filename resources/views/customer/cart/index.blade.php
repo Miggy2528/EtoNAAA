@@ -221,27 +221,6 @@
             text-align: center;
         }
 
-        .update-btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 6px 10px;
-            font-size: 0.8rem;
-            margin-left: 5px;
-            transition: all 0.3s ease;
-        }
-
-        .remove-btn {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 8px 10px;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-
         .empty-cart {
             background: white;
             border-radius: 12px;
@@ -501,14 +480,14 @@
                                         
                                         <div class="col-md-2">
                                             <div class="quantity-controls">
-                                                <form action="{{ route('customer.cart.update', $item->rowId) }}" method="POST" class="d-flex align-items-center">
+                                                <form action="{{ route('customer.cart.update', $item->rowId) }}" method="POST" class="d-flex align-items-center gap-2">
                                                     @csrf
                                                     @method('PUT')
                                                     <input type="number" name="quantity" value="{{ $item->qty }}" 
                                                            min="1" max="{{ $item->options->stock }}" 
                                                            class="quantity-input">
-                                                    <button type="submit" class="btn update-btn">
-                                                        <i class="fas fa-sync-alt"></i>
+                                                    <button type="submit" class="btn btn-sm btn-success update-btn" title="Update quantity" style="padding: 4px 8px; font-size: 0.75rem;">
+                                                        <i class="fas fa-check"></i>
                                                     </button>
                                                 </form>
                                             </div>
@@ -573,7 +552,7 @@
                     <div class="card-body">
                         @if($cartItems->count() > 0)
                             <div class="summary-item">
-                                <span>Subtotal ({{ $cartItems->count() }} items):</span>
+                                <span>Subtotal ({{ $cartItems->sum('qty') }} {{ $cartItems->sum('qty') > 1 ? 'items' : 'item' }}):</span>
                                 <span>₱{{ number_format($cartSubtotal, 2) }}</span>
                             </div>
                             <div class="summary-total">
@@ -599,5 +578,22 @@
 
     <script src="{{ asset('assets/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('assets/js/jquery-3.6.0.min.js') }}"></script>
+    
+    <script>
+        // Auto-submit cart update when quantity changes
+        document.addEventListener('DOMContentLoaded', function() {
+            const quantityInputs = document.querySelectorAll('.quantity-input');
+            
+            quantityInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    // Find the closest form and submit it
+                    const form = this.closest('form');
+                    if (form) {
+                        form.submit();
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

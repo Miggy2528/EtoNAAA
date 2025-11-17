@@ -15,7 +15,7 @@ class CartController extends Controller
     public function index()
     {
         $cartItems = Cart::instance('customer')->content();
-        $cartSubtotal = Cart::instance('customer')->subtotal();
+        $cartSubtotal = str_replace(',', '', Cart::instance('customer')->subtotal());
 
         return view('customer.cart.index', compact('cartItems', 'cartSubtotal'));
     }

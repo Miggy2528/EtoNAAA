@@ -88,38 +88,42 @@
                         {{ $purchase->purchase_no }}
                     </td>
                     <td class="align-middle">
-                        {{ $purchase->supplier->name }}
+                        {{ $purchase->supplier?->name ?? 'N/A' }}
                     </td>
                     <td class="align-middle text-center">
                         {{ $purchase->date->format('d-m-Y') }}
                     </td>
                     <td class="align-middle text-center">
-€{{ number_format($purchase->total_amount, 2) }}
+₱{{ number_format($purchase->total_amount, 2) }}
                     </td>
 
-                    @if ($purchase->status === \App\Enums\PurchaseStatus::APPROVED)
-                        <td class="align-middle text-center">
-                            <span class="badge bg-green text-white text-uppercase">
-                                {{ __('APPROVED') }}
-                            </span>
-                        </td>
-                        <td class="align-middle text-center">
-                            <x-button.show class="btn-icon" route="{{ route('purchases.show', $purchase) }}"/>
-
-                            <x-button.edit class="btn-icon" route="{{ route('purchases.edit', $purchase) }}"/>
-                        </td>
-                    @else
-                        <td class="align-middle text-center">
-                            <span class="badge bg-orange text-white text-uppercase">
-                                {{ __('PENDING') }}
-                            </span>
-                        </td>
-                        <td class="align-middle text-center" style="width: 5%">
-                            <x-button.show class="btn-icon" route="{{ route('purchases.show', $purchase) }}"/>
+                    <td class="align-middle text-center">
+                        @php
+                            $statusColors = [
+                                \App\Enums\PurchaseStatus::PENDING->value => 'bg-warning',
+                                \App\Enums\PurchaseStatus::APPROVED->value => 'bg-success',
+                                \App\Enums\PurchaseStatus::FOR_DELIVERY->value => 'bg-info',
+                                \App\Enums\PurchaseStatus::COMPLETE->value => 'bg-primary',
+                                \App\Enums\PurchaseStatus::RECEIVED->value => 'bg-success',
+                            ];
+                            $statusValue = is_object($purchase->status) ? $purchase->status->value : $purchase->status;
+                            $colorClass = $statusColors[$statusValue] ?? 'bg-secondary';
+                            $statusLabel = is_object($purchase->status) ? $purchase->status->label() : 'Unknown';
+                        @endphp
+                        <span class="badge {{ $colorClass }} text-white text-uppercase" style="font-size: 14px; padding: 6px 12px;">
+                            {{ $statusLabel }}
+                        </span>
+                    </td>
+                    <td class="align-middle text-center">
+                        <x-button.show class="btn-icon" route="{{ route('purchases.show', $purchase) }}"/>
+                        
+                        @if ($purchase->status === \App\Enums\PurchaseStatus::PENDING)
                             <x-button.edit class="btn-icon" route="{{ route('purchases.edit', $purchase) }}"/>
                             <x-button.delete class="btn-icon" route="{{ route('purchases.delete', $purchase) }}"/>
-                        </td>
-                    @endif
+                        @elseif ($purchase->status === \App\Enums\PurchaseStatus::APPROVED)
+                            <x-button.edit class="btn-icon" route="{{ route('purchases.edit', $purchase) }}"/>
+                        @endif
+                    </td>
                 </tr>
                 @empty
                 <tr>

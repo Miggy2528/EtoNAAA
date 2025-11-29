@@ -191,26 +191,12 @@
         </div>
     </div>
 
-    <!-- Stock Trend & Expiration Alerts Row -->
+    <!-- Stock Alerts and Top Selling Row -->
     <div class="row mb-4">
-        <!-- Stock Trend Chart -->
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-chart-line me-2"></i>
-                        Stock Movement Trend (Last 30 Days)
-                    </h3>
-                </div>
-                <div class="card-body">
-                    <canvas id="stockTrendChart" height="100"></canvas>
-                </div>
-            </div>
-        </div>
         
         <!-- Expiring Products Alert -->
         <div class="col-md-4">
-            <div class="card">
+            <div class="card stat-card">
                 <div class="card-header bg-warning text-white">
                     <h3 class="card-title">
                         <i class="fas fa-hourglass-half me-2"></i>
@@ -245,74 +231,108 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Filters -->
-    <div class="row mb-3">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <form method="GET" action="{{ route('reports.inventory') }}">
-                        <div class="row g-3">
-                            <div class="col-md-2">
-                                <label class="form-label">Filter by Staff</label>
-                                <select name="staff_id" class="form-select">
-                                    <option value="">All Staff</option>
-                                    @foreach($allStaff as $staff)
-                                        <option value="{{ $staff->id }}" {{ request('staff_id') == $staff->id ? 'selected' : '' }}>
-                                            {{ $staff->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label">Animal Type</label>
-                                <select name="animal_type" class="form-select">
-                                    <option value="">All Types</option>
-                                    @foreach($animalTypes as $type)
-                                        <option value="{{ $type }}" {{ request('animal_type') == $type ? 'selected' : '' }}>
-                                            {{ ucfirst($type) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label">Stock Status</label>
-                                <select name="stock_status" class="form-select">
-                                    <option value="">All Status</option>
-                                    <option value="in_stock" {{ request('stock_status') == 'in_stock' ? 'selected' : '' }}>In Stock</option>
-                                    <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Low Stock</option>
-                                    <option value="out" {{ request('stock_status') == 'out' ? 'selected' : '' }}>Out of Stock</option>
-                                </select>
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label">Date From</label>
-                                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label">Date To</label>
-                                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
-                            </div>
-                            <div class="col-md-2 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary me-2">
-                                    <i class="fas fa-filter me-1"></i>Filter
-                                </button>
-                                <a href="{{ route('reports.inventory') }}" class="btn btn-secondary">
-                                    <i class="fas fa-redo me-1"></i>Reset
-                                </a>
-                            </div>
+        <!-- Top Selling Products -->
+        <div class="col-md-8">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="card stat-card">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-fire me-2"></i>Top Selling Today <span class="badge bg-secondary ms-2">Top 5</span></h3>
                         </div>
-                    </form>
+                        <div class="card-body p-0">
+                            <table class="table table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th class="text-end">Qty</th>
+                                        <th class="text-end">Revenue</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($topSellingDaily as $item)
+                                        <tr>
+                                            <td>{{ $item->product->name ?? 'N/A' }}</td>
+                                            <td class="text-end">{{ $item->total_qty }}</td>
+                                            <td class="text-end">₱{{ number_format($item->revenue, 2) }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="3" class="text-center text-muted">No data</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stat-card">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-calendar-alt me-2"></i>Top Selling This Month <span class="badge bg-secondary ms-2">Top 5</span></h3>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th class="text-end">Qty</th>
+                                        <th class="text-end">Revenue</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($topSellingMonthly as $item)
+                                        <tr>
+                                            <td>{{ $item->product->name ?? 'N/A' }}</td>
+                                            <td class="text-end">{{ $item->total_qty }}</td>
+                                            <td class="text-end">₱{{ number_format($item->revenue, 2) }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="3" class="text-center text-muted">No data</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card stat-card">
+                        <div class="card-header">
+                            <h3 class="card-title"><i class="fas fa-chart-line me-2"></i>Top Selling This Year <span class="badge bg-secondary ms-2">Top 5</span></h3>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th class="text-end">Qty</th>
+                                        <th class="text-end">Revenue</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($topSellingYearly as $item)
+                                        <tr>
+                                            <td>{{ $item->product->name ?? 'N/A' }}</td>
+                                            <td class="text-end">{{ $item->total_qty }}</td>
+                                            <td class="text-end">₱{{ number_format($item->revenue, 2) }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr><td colspan="3" class="text-center text-muted">No data</td></tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+>
+
 
     <!-- Analytics Charts Row -->
     <div class="row mb-4">
         <!-- Product Distribution Pie Chart -->
         <div class="col-md-4">
-            <div class="card">
+            <div class="card stat-card">
                 <div class="card-header">
                     <h3 class="card-title">
                         <i class="fas fa-chart-pie me-2"></i>
@@ -327,7 +347,7 @@
 
         <!-- Stock Level Distribution -->
         <div class="col-md-4">
-            <div class="card">
+            <div class="card stat-card">
                 <div class="card-header">
                     <h3 class="card-title">
                         <i class="fas fa-layer-group me-2"></i>
@@ -342,7 +362,7 @@
 
         <!-- Stock Value by Category -->
         <div class="col-md-4">
-            <div class="card">
+            <div class="card stat-card">
                 <div class="card-header">
                     <h3 class="card-title">
                         <i class="fas fa-chart-bar me-2"></i>
@@ -356,62 +376,56 @@
         </div>
     </div>
 
-    <!-- Recent Activity & Staff Performance Row -->
-    <div class="row mb-4">
-        <!-- Recent Activity -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-history me-2"></i>
-                        Recent Stock Activity (Last 7 Days)
-                    </h3>
-                </div>
-                <div class="card-body">
-                    @forelse($recentActivity as $activity)
-                        <div class="activity-item {{ $activity->action }}">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <strong>{{ $activity->product->name ?? 'Unknown Product' }}</strong>
-                                    <span class="badge bg-{{ $activity->action === 'created' ? 'success' : ($activity->action === 'updated' ? 'info' : 'danger') }} ms-2">
-                                        {{ ucfirst($activity->action) }}
-                                    </span>
-                                    <div class="small text-muted">
-                                        by {{ $activity->staff->name ?? 'System' }} • {{ $activity->created_at->diffForHumans() }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-center text-muted py-4">
-                            <i class="fas fa-inbox fa-3x mb-3"></i>
-                            <p>No recent activity</p>
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-        </div>
-
-        <!-- Staff Activity Chart -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-users me-2"></i>
-                        Staff Productivity (Product Updates)
-                    </h3>
-                </div>
-                <div class="card-body">
-                    <canvas id="staffActivityChart" height="250"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
+    {{-- Recent Activity moved to bottom --}}
 
     <!-- Products Table -->
     <div class="row mb-4">
+        <div class="col-12 mb-3">
+            <form method="GET" action="{{ route('reports.inventory') }}" class="row g-2 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label mb-0">Animal Type</label>
+                    <select name="animal_type" class="form-select">
+                        <option value="">All Types</option>
+                        @foreach($animalTypes as $type)
+                            <option value="{{ $type }}" {{ request('animal_type') == $type ? 'selected' : '' }}>
+                                {{ ucfirst($type) }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label mb-0">Stock Status</label>
+                    <select name="stock_status" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="in_stock" {{ request('stock_status') == 'in_stock' ? 'selected' : '' }}>In Stock</option>
+                        <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Low Stock</option>
+                        <option value="out" {{ request('stock_status') == 'out' ? 'selected' : '' }}>Out of Stock</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label mb-0">Date From</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label mb-0">Date To</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+                </div>
+                <div class="col-md-4 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary" style="font-weight: 600; font-size: 1rem; padding: 10px 20px;">
+                        <i class="fas fa-filter me-1"></i>Filter
+                    </button>
+                    <a href="{{ route('reports.inventory') }}" class="btn btn-secondary" style="font-weight: 600; font-size: 1rem; padding: 10px 20px;">
+                        <i class="fas fa-redo me-1"></i>Reset
+                    </a>
+                </div>
+            </form>
+        </div>
+        </div>
+
+        <!-- Top Selling Products moved beside Expiring Products -->
+
         <div class="col-12">
-            <div class="card">
+            <div class="card stat-card">
                 <div class="card-header">
                     <h3 class="card-title">
                         <i class="fas fa-list me-2"></i>
@@ -437,7 +451,13 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($products as $product)
+                                @forelse($productsByBatch as $batchDate => $batchProducts)
+                                    <tr>
+                                        <td colspan="10" class="bg-light">
+                                            <strong>Batch:</strong> {{ $batchDate ?? 'Unknown' }}
+                                        </td>
+                                    </tr>
+                                    @foreach($batchProducts as $product)
                                     <tr>
                                         <td><strong>{{ $product->name }}</strong></td>
                                         <td><code>{{ $product->code }}</code></td>
@@ -472,7 +492,6 @@
                                                     $expirationDate = \Carbon\Carbon::parse($product->expiration_date);
                                                     $daysUntilExpiry = now()->diffInDays($expirationDate, false);
                                                 @endphp
-                                                
                                                 @if($daysUntilExpiry < 0)
                                                     <span class="badge bg-dark">
                                                         <i class="fas fa-skull-crossbones me-1"></i>Expired
@@ -510,6 +529,7 @@
                                             <div class="small text-muted">{{ $product->updated_at->format('h:i A') }}</div>
                                         </td>
                                     </tr>
+                                    @endforeach
                                 @empty
                                     <tr>
                                         <td colspan="10" class="text-center py-4">
@@ -525,39 +545,93 @@
             </div>
         </div>
     </div>
+    <!-- Expired Products History -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h3 class="card-title"><i class="fas fa-skull-crossbones me-2"></i>Expired Products History</h3>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Animal Type</th>
+                                    <th>Cut</th>
+                                    <th class="text-end">Quantity</th>
+                                    <th>Expired On</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($expiredProducts as $product)
+                                <tr class="table-dark">
+                                    <td><strong>{{ $product->name }}</strong></td>
+                                    <td>{{ $product->meatCut->animal_type ?? 'N/A' }}</td>
+                                    <td>{{ $product->meatCut->name ?? 'N/A' }}</td>
+                                    <td class="text-end">{{ $product->quantity }} {{ $product->unit->name ?? 'pcs' }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($product->expiration_date)->format('M d, Y') }}</td>
+                                    <td><span class="badge bg-dark"><i class="fas fa-times me-1"></i>Expired</span></td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        <i class="fas fa-check-circle fa-2x d-block mb-2"></i>
+                                        No expired products
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Stock Activity moved to bottom -->
+    <div class="row mb-4">
+        <!-- Recent Activity -->
+        <div class="col-md-6">
+            <div class="card stat-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-history me-2"></i>
+                        Recent Stock Activity (Last 7 Days)
+                    </h3>
+                </div>
+                <div class="card-body">
+                    @forelse($recentActivity as $activity)
+                        <div class="activity-item {{ $activity->action }}">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <strong>{{ $activity->product->name ?? 'Unknown Product' }}</strong>
+                                    <span class="badge bg-{{ $activity->action === 'created' ? 'success' : ($activity->action === 'updated' ? 'info' : 'danger') }} ms-2">
+                                        {{ ucfirst($activity->action) }}
+                                    </span>
+                                    <div class="small text-muted">
+                                        by {{ $activity->staff->name ?? 'System' }} • {{ $activity->created_at->diffForHumans() }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-inbox fa-3x mb-3"></i>
+                            <p>No recent activity</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 @push('page-scripts')
 <script>
-    // Stock Trend Line Chart
-    const trendCtx = document.getElementById('stockTrendChart').getContext('2d');
-    const stockTrendChart = new Chart(trendCtx, {
-        type: 'line',
-        data: {
-            labels: {!! json_encode($stockTrend->keys()) !!},
-            datasets: [{
-                label: 'Stock Updates',
-                data: {!! json_encode($stockTrend->values()) !!},
-                borderColor: 'rgb(139, 0, 0)',
-                backgroundColor: 'rgba(139, 0, 0, 0.1)',
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 }
-                }
-            },
-            plugins: {
-                legend: { display: false }
-            }
-        }
-    });
 
     // Product Distribution Pie Chart
     const distributionCtx = document.getElementById('productDistributionChart').getContext('2d');
@@ -660,35 +734,6 @@
         }
     });
 
-    // Staff Activity Bar Chart
-    const activityCtx = document.getElementById('staffActivityChart').getContext('2d');
-    const staffActivityChart = new Chart(activityCtx, {
-        type: 'bar',
-        data: {
-            labels: {!! json_encode($staffActivity->pluck('staff.name')) !!},
-            datasets: [{
-                label: 'Product Updates',
-                data: {!! json_encode($staffActivity->pluck('update_count')) !!},
-                backgroundColor: 'rgba(23, 162, 184, 0.8)',
-                borderColor: 'rgb(23, 162, 184)',
-                borderWidth: 2,
-                borderRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 }
-                }
-            },
-            plugins: {
-                legend: { display: false }
-            }
-        }
-    });
 
     // Auto-refresh analytics every 30 seconds
     setInterval(function() {

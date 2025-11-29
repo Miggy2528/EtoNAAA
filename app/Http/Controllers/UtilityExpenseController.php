@@ -12,8 +12,9 @@ class UtilityExpenseController extends Controller
      */
     public function index()
     {
-        $expenses = UtilityExpense::latest()->paginate(10);
-        return view('expenses.utilities.index', compact('expenses'));
+        $expenses = UtilityExpense::notVoid()->latest()->paginate(10);
+        $voidedExpenses = UtilityExpense::voided()->with('voidedBy')->latest()->paginate(10);
+        return view('expenses.utilities.index', compact('expenses', 'voidedExpenses'));
     }
 
     /**
@@ -93,5 +94,24 @@ class UtilityExpenseController extends Controller
         $expense->delete();
 
         return redirect()->route('expenses.utilities.index')->with('success', 'Utility expense deleted successfully');
+    }
+
+    /**
+     * Void the specified expense (instead of delete)
+     */
+    public function void(Request $request, UtilityExpense $utilityExpense)
+    {
+        // Check if already voided
+        if ($utilityExpense->is_void) {
+            return redirect()->route('expenses.utilities.index')->with('error', 'This expense is already voided');
+        }
+
+        $validated = $request->validate([
+            'void_reason' => 'required|string|max:500',
+        ]);
+
+        $utilityExpense->void($validated['void_reason'], auth()->id());
+
+        return redirect()->route('expenses.utilities.index')->with('success', 'Utility expense voided successfully');
     }
 }

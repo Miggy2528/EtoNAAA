@@ -28,12 +28,16 @@ class SupplierAnalyticsController extends Controller
             $procurementInsights = $this->generateDummyProcurementInsights();
             $topSuppliers = $this->generateDummyTopSuppliers();
             $monthlyTrends = $this->generateDummyMonthlyTrends();
+            $monthlySupplierTrends = $this->generateDummyMonthlyTrendsBySupplier();
+            $monthlySupplierDatasets = $this->decorateDatasets($monthlySupplierTrends['datasets']);
         } else {
             $performanceData = $this->getSupplierPerformance();
             $deliveryTracking = $this->getDeliveryTracking();
             $procurementInsights = $this->getProcurementInsights();
-            $topSuppliers = $this->getTopSuppliers();
+            $topSuppliers = $this->getTopSuppliers(4);
             $monthlyTrends = $this->getMonthlyProcurementTrends();
+            $monthlySupplierTrends = $this->getMonthlyProcurementTrendsBySupplier();
+            $monthlySupplierDatasets = $this->decorateDatasets($monthlySupplierTrends['datasets']);
         }
         
         return view('reports.supplier-analytics', compact(
@@ -43,6 +47,8 @@ class SupplierAnalyticsController extends Controller
             'procurementInsights',
             'topSuppliers',
             'monthlyTrends',
+            'monthlySupplierTrends',
+                        'monthlySupplierDatasets',
             'hasProcurementData'
         ));
     }
@@ -210,6 +216,140 @@ class SupplierAnalyticsController extends Controller
     }
 
     /**
+     * Decorate chart datasets with colors and styles
+     */
+    private function decorateDatasets(array $datasets)
+    {
+        $palette = [
+            'rgb(75, 192, 192)',
+            'rgb(255, 99, 132)',
+            'rgb(54, 162, 235)',
+            'rgb(255, 159, 64)'
+        ];
+
+        $styled = [];
+        foreach ($datasets as $i => $ds) {
+            $color = $palette[$i % count($palette)];
+            $rgba = 'rgba(' . substr($color, 4, -1) . ', 0.1)';
+            $styled[] = [
+                'label' => $ds['label'],
+                'data' => $ds['data'],
+                'borderColor' => $color,
+                'backgroundColor' => $rgba,
+                'tension' => 0.4,
+                'fill' => true,
+            ];
+        }
+
+        return $styled;
+    }
+
+    /**
+     * Get monthly procurement cost trends by supplier (last 12 months)
+     */
+    private function getMonthlyProcurementTrendsBySupplier()
+    {
+        $rawMonths = Procurement::where('delivery_date', '>=', Carbon::now()->subMonths(12))
+            ->select(DB::raw('DATE_FORMAT(delivery_date, "%Y-%m") as month'))
+            ->groupBy('month')
+            ->orderBy('month')
+            ->pluck('month')
+            ->toArray();
+
+        $months = array_map(function ($m) {
+            return Carbon::parse($m . '-01')->format('M Y');
+        }, $rawMonths);
+
+        $suppliers = Supplier::select('suppliers.id', 'suppliers.name')
+            ->join('procurements', 'suppliers.id', '=', 'procurements.supplier_id')
+            ->where('procurements.delivery_date', '>=', Carbon::now()->subMonths(12))
+            ->groupBy('suppliers.id', 'suppliers.name')
+            ->orderBy('suppliers.name')
+            ->limit(4)
+            ->get();
+
+        $datasets = [];
+        foreach ($suppliers as $supplier) {
+            $rows = Procurement::where('supplier_id', $supplier->id)
+                ->where('delivery_date', '>=', Carbon::now()->subMonths(12))
+                ->select(DB::raw('DATE_FORMAT(delivery_date, "%Y-%m") as month'), DB::raw('SUM(total_cost) as total_cost'))
+                ->groupBy('month')
+                ->orderBy('month')
+                ->pluck('total_cost', 'month');
+
+            $data = [];
+            foreach ($rawMonths as $m) {
+                $data[] = isset($rows[$m]) ? (float)$rows[$m] : 0;
+            }
+
+            $datasets[] = [
+                'label' => $supplier->name,
+                'data' => $data,
+            ];
+        }
+
+        return [
+            'months' => $months,
+            'datasets' => $datasets,
+        ];
+    }
+
+    /**
+     * Generate dummy monthly procurement trends by supplier (preview)
+     */
+    private function generateDummyMonthlyTrendsBySupplier()
+    {
+        $suppliers = Supplier::take(4)->get();
+        if ($suppliers->count() < 4) {
+            $placeholders = collect();
+            for ($i = $suppliers->count() + 1; $i <= 4; $i++) {
+                $placeholders->push((object)[
+                    'id' => 100 + $i,
+                    'name' => 'Supplier ' . $i,
+                ]);
+            }
+            $suppliers = $suppliers->concat($placeholders);
+        }
+
+        // Fixed months: Jan-Oct 2025
+        $months = [];
+        for ($m = 1; $m <= 10; $m++) {
+            $months[] = Carbon::create(2025, $m, 1)->format('M Y');
+        }
+
+        // Target yearly totals per supplier (aligns with Top Suppliers)
+        $totals = [685000, 598000, 425000, 375000];
+        $datasets = [];
+
+        foreach ($suppliers as $idx => $supplier) {
+            $targetTotal = $totals[$idx % count($totals)];
+            $base = $targetTotal / 10;
+            $data = [];
+            $acc = 0;
+
+            // First 9 months with variance ±20%
+            for ($i = 0; $i < 9; $i++) {
+                $variance = ($base * rand(-20, 20)) / 100; // ±20%
+                $val = max(0, round($base + $variance));
+                $data[] = $val;
+                $acc += $val;
+            }
+            // Last month adjusts to exact total
+            $data[] = max(0, $targetTotal - $acc);
+
+            $datasets[] = [
+                'label' => $supplier->name,
+                'data' => $data,
+            ];
+        }
+
+        return [
+            'months' => $months,
+            'datasets' => $datasets,
+        ];
+    }
+
+    /**
      * Export supplier analytics data (Optional future enhancement)
      */
     public function export()
@@ -315,17 +455,25 @@ class SupplierAnalyticsController extends Controller
      */
     private function generateDummyTopSuppliers()
     {
-        // Get actual suppliers from database
+        // Get actual suppliers from database (up to 4)
         $suppliers = Supplier::take(4)->get();
-        
-        if ($suppliers->isEmpty()) {
-            return collect([]);
+
+        // Ensure we have 4 supplier entries with names
+        if ($suppliers->count() < 4) {
+            $placeholders = collect();
+            for ($i = $suppliers->count() + 1; $i <= 4; $i++) {
+                $placeholders->push((object)[
+                    'id' => 100 + $i,
+                    'name' => 'Supplier ' . $i,
+                ]);
+            }
+            $suppliers = $suppliers->concat($placeholders);
         }
-        
+
         $costs = [685000, 598000, 425000, 375000];
         $procurements = [52, 46, 38, 32];
         $defectRates = [1.80, 1.50, 2.10, 1.90];
-        
+
         $topSuppliersData = [];
         foreach ($suppliers as $index => $supplier) {
             $topSuppliersData[] = (object)[
@@ -336,7 +484,7 @@ class SupplierAnalyticsController extends Controller
                 'avg_defect_rate' => $defectRates[$index] ?? (rand(15, 25) / 10),
             ];
         }
-        
+
         return collect($topSuppliersData)->sortByDesc('total_spent')->values();
     }
 

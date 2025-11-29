@@ -10,8 +10,6 @@ use Livewire\Component;
 
 class PurchaseForm extends Component
 {
-    #[Validate('Required')]
-    public int $taxes = 0;
 
     public array $invoiceProducts = [];
 
@@ -35,7 +33,7 @@ class PurchaseForm extends Component
 
         return view('livewire.purchase-form', [
             'subtotal' => $total,
-            'total' => $total * (1 + (is_numeric($this->taxes) ? $this->taxes : 0) / 100),
+            'total' => $total,
         ]);
     }
 

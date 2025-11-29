@@ -6,9 +6,9 @@
         <div class="row g-2 align-items-center">
             <div class="col">
                 <h2 class="page-title">
-                    My Purchase Orders
+                    Orders from Admin
                 </h2>
-                <div class="text-muted mt-1">Track and manage your purchase orders</div>
+                <div class="text-muted mt-1">Track and manage orders placed by the admin</div>
             </div>
             <div class="col-auto ms-auto d-print-none">
                 <a href="{{ route('supplier.dashboard') }}" class="btn btn-outline-primary">
@@ -24,13 +24,13 @@
     <div class="container-xl">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title">Purchase Orders List</h3>
+                <h3 class="card-title">Admin Orders List</h3>
             </div>
             <div class="table-responsive">
                 <table class="table table-vcenter card-table table-striped">
                     <thead>
                         <tr>
-                            <th>Purchase No.</th>
+                            <th>Order No.</th>
                             <th>Date</th>
                             <th>Total Amount</th>
                             <th>Status</th>
@@ -45,9 +45,22 @@
                                 <td>{{ $purchase->date->format('M d, Y') }}</td>
                                 <td>₱{{ number_format($purchase->total_amount, 2) }}</td>
                                 <td>
-                                    <span class="badge bg-{{ $purchase->status->value === 'pending' ? 'warning' : ($purchase->status->value === 'approved' ? 'success' : 'danger') }}">
-                                        {{ ucfirst($purchase->status->value) }}
-                                    </span>
+                                    @php
+                                        $statusValue = is_object($purchase->status) ? $purchase->status->value : $purchase->status;
+                                    @endphp
+                                    @if($statusValue == 0)
+                                        <span class="badge bg-warning">Pending</span>
+                                    @elseif($statusValue == 1)
+                                        <span class="badge bg-success">Approved</span>
+                                    @elseif($statusValue == 2)
+                                        <span class="badge bg-info">For Delivery</span>
+                                    @elseif($statusValue == 3)
+                                        <span class="badge bg-primary">Complete</span>
+                                    @elseif($statusValue == 4)
+                                        <span class="badge bg-success">Received</span>
+                                    @else
+                                        <span class="badge bg-secondary">Unknown</span>
+                                    @endif
                                 </td>
                                 <td>{{ $purchase->createdBy->name ?? 'N/A' }}</td>
                                 <td>
@@ -59,7 +72,7 @@
                         @empty
                             <tr>
                                 <td colspan="6" class="text-center text-muted py-4">
-                                    No purchase orders found
+                                    No orders found from admin
                                 </td>
                             </tr>
                         @endforelse

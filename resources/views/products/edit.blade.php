@@ -168,28 +168,6 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-sm-6 col-md-6">
-                                        <div class="mb-3">
-                                            <label for="selling_price" class="form-label">
-                                                Selling price
-                                                <span class="text-danger">*</span>
-                                            </label>
-
-                                            <input type="text"
-                                                   id="selling_price"
-                                                   name="selling_price"
-                                                   class="form-control @error('selling_price') is-invalid @enderror"
-                                                   placeholder="0"
-                                                   value="{{ old('selling_price', $product->selling_price) }}"
-                                            >
-
-                                            @error('selling_price')
-                                            <div class="invalid-feedback">
-                                                {{ $message }}
-                                            </div>
-                                            @enderror
-                                        </div>
-                                    </div>
 
                                     <div class="col-sm-6 col-md-6">
                                         <div class="mb-3">

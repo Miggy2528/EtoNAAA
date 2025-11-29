@@ -11,6 +11,9 @@
             <p class="text-muted">Track utilities, payroll, and other business expenses</p>
         </div>
         <div class="col-auto">
+            <a href="{{ route('expenses.voided') }}" class="btn btn-outline-danger me-2">
+                <i class="fas fa-ban me-1"></i>View Voided Expenses
+            </a>
             <a href="{{ route('reports.index') }}" class="btn btn-outline-secondary">
                 <i class="fas fa-arrow-left me-1"></i>Back to Reports
             </a>
@@ -209,13 +212,41 @@
                             <tbody>
                                 @forelse($recentUtilities as $util)
                                 <tr>
-                                    <td><span class="badge badge-warning">Utility</span></td>
-                                    <td>{{ $util->type }}</td>
-                                    <td>₱{{ number_format($util->amount, 2) }}</td>
                                     <td>
-                                        <span class="badge badge-{{ $util->status === 'paid' ? 'success' : 'warning' }}">
-                                            {{ ucfirst($util->status) }}
+                                        @php
+                                            $typeColors = [
+                                                'electricity' => 'bg-warning text-dark',
+                                                'water' => 'bg-info text-white',
+                                                'internet' => 'bg-primary text-white',
+                                                'rent' => 'bg-secondary text-white',
+                                                'telephone' => 'bg-success text-white',
+                                            ];
+                                            $colorClass = $typeColors[strtolower($util->type)] ?? 'bg-dark text-white';
+                                        @endphp
+                                        <span class="badge {{ $colorClass }} rounded-pill">
+                                            <i class="fas fa-bolt me-1"></i>{{ ucfirst($util->type) }}
                                         </span>
+                                    </td>
+                                    <td>
+                                        @if($util->notes)
+                                            {{ $util->notes }}
+                                        @elseif($util->description)
+                                            {{ $util->description }}
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+                                    <td><strong class="text-success">₱{{ number_format($util->amount, 2) }}</strong></td>
+                                    <td>
+                                        @if($util->status === 'paid')
+                                            <span class="badge bg-success text-white rounded-pill">
+                                                <i class="fas fa-check-circle me-1"></i>Paid
+                                            </span>
+                                        @else
+                                            <span class="badge bg-danger text-white rounded-pill">
+                                                <i class="fas fa-exclamation-circle me-1"></i>Pending
+                                            </span>
+                                        @endif
                                     </td>
                                 </tr>
                                 @empty
@@ -249,13 +280,28 @@
                             <tbody>
                                 @forelse($recentPayroll as $payroll)
                                 <tr>
-                                    <td>{{ $payroll->user->name ?? 'N/A' }}</td>
-                                    <td>{{ $payroll->month_name }} {{ $payroll->year }}</td>
-                                    <td>₱{{ number_format($payroll->total_salary, 2) }}</td>
                                     <td>
-                                        <span class="badge badge-{{ $payroll->status === 'paid' ? 'success' : 'warning' }}">
-                                            {{ ucfirst($payroll->status) }}
-                                        </span>
+                                        @if($payroll->staff)
+                                            <strong class="text-primary">{{ $payroll->staff->name }}</strong>
+                                            <br><small class="badge bg-light text-dark">{{ $payroll->staff->position }}</small>
+                                        @elseif($payroll->user)
+                                            <strong>{{ $payroll->user->name }}</strong>
+                                        @else
+                                            <span class="text-muted">N/A</span>
+                                        @endif
+                                    </td>
+                                    <td><small class="text-muted">{{ $payroll->month_name }} {{ $payroll->year }}</small></td>
+                                    <td><strong class="text-success">₱{{ number_format($payroll->total_salary, 2) }}</strong></td>
+                                    <td>
+                                        @if($payroll->status === 'paid')
+                                            <span class="badge bg-success text-white rounded-pill">
+                                                <i class="fas fa-check-circle me-1"></i>Paid
+                                            </span>
+                                        @else
+                                            <span class="badge bg-danger text-white rounded-pill">
+                                                <i class="fas fa-clock me-1"></i>Pending
+                                            </span>
+                                        @endif
                                     </td>
                                 </tr>
                                 @empty

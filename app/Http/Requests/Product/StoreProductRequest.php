@@ -27,7 +27,8 @@ class StoreProductRequest extends FormRequest
         return [
             'product_image'     => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'name'              => 'required|string',
-            'slug'              => 'required|unique:products',
+            // allow duplicate names by removing unique slug constraint
+            'slug'              => 'required|string',
             'code'              => 'nullable|string|unique:products',
             'category_id'       => 'required|integer',
             'unit_id'           => 'required|integer',
@@ -38,7 +39,6 @@ class StoreProductRequest extends FormRequest
             'source'            => 'required|string',
             'notes'             => 'nullable|string|max:1000',
             'buying_price'      => 'required|numeric|min:0',
-            'selling_price'     => 'required|numeric|min:0',
             'quantity_alert'    => 'required|integer|min:0',
         ];
     }
@@ -59,8 +59,16 @@ class StoreProductRequest extends FormRequest
             }
         }
         
+        // Generate a readable unique slug with auto-suffix
+        $baseSlug = Str::slug($this->name, '-');
+        $slug = $baseSlug;
+        $suffix = 2;
+        while (Product::where('slug', $slug)->exists()) {
+            $slug = $baseSlug.'-'.$suffix;
+            $suffix++;
+        }
         $this->merge([
-            'slug' => Str::slug($this->name, '-'),
+            'slug' => $slug,
             'code' => $code,
         ]);
     }

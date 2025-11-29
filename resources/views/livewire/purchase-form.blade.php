@@ -1,3 +1,4 @@
+
 <div>
     <table class="table table-bordered" id="products_table">
         <thead class="thead-dark">
@@ -115,22 +116,7 @@
                 </th>
                 <td class="text-center">
 {{--                    ${{ number_format($subtotal, 2) }}--}}
-€{{ number_format($subtotal, 2) }}
-                </td>
-            </tr>
-            <tr>
-                <th colspan="4" class="align-middle text-end">
-                    Taxes
-                </th>
-                <td width="150" class="align-middle text-center">
-                    <input wire:model.blur="taxes" type="number" id="taxes" class="form-control w-75 d-inline" min="0" max="100">
-                    %
-
-                    @error('taxes')
-                    <em class="invalid-feedback">
-                        {{ $message }}
-                    </em>
-                    @enderror
+₱{{ number_format($subtotal, 2) }}
                 </td>
             </tr>
             <tr>
@@ -138,7 +124,7 @@
                     Total
                 </th>
                 <td class="text-center">
-€{{ number_format($total, 2) }}
+₱{{ number_format($total, 2) }}
                     <input type="hidden" name="total_amount" value="{{ $total }}">
                 </td>
             </tr>

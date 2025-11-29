@@ -1,4 +1,4 @@
-@extends('layouts.tabler')
+@extends('layouts.butcher')
 
 @section('content')
 <div class="page-body">
@@ -34,6 +34,21 @@
                                             <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-check" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l5 5l10 -10" /></svg>
 
                                             {{ __('Approve Purchase') }}
+                                        </button>
+                                    </form>
+                                @endif
+                                
+                                @php
+                                    $statusValue = is_object($purchase->status) ? $purchase->status->value : $purchase->status;
+                                @endphp
+                                @if ($statusValue == 3)
+                                    <form action="{{ route('purchases.mark-received', $purchase) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="dropdown-item text-primary"
+                                                onclick="return confirm('Mark this purchase as received?')"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-package" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 3l8 4.5l0 9l-8 4.5l-8 -4.5l0 -9l8 -4.5" /><path d="M12 12l8 -4.5" /><path d="M12 12l0 9" /><path d="M12 12l-8 -4.5" /></svg>
+                                            {{ __('Mark as Received') }}
                                         </button>
                                     </form>
                                 @endif
@@ -77,6 +92,30 @@
                                    value="{{ $purchase->supplier->name }}"
                                    disabled
                             >
+                        </div>
+
+                        <div class="col">
+                            <label for="status" class="small mb-1">
+                                {{ __('Status') }}
+                            </label>
+                            <div>
+                                @php
+                                    $statusValue = is_object($purchase->status) ? $purchase->status->value : $purchase->status;
+                                @endphp
+                                @if($statusValue == 0)
+                                    <span class="badge bg-warning" style="font-size: 14px; padding: 6px 12px;">Pending</span>
+                                @elseif($statusValue == 1)
+                                    <span class="badge bg-success" style="font-size: 14px; padding: 6px 12px;">Approved</span>
+                                @elseif($statusValue == 2)
+                                    <span class="badge bg-info" style="font-size: 14px; padding: 6px 12px;">For Delivery</span>
+                                @elseif($statusValue == 3)
+                                    <span class="badge bg-primary" style="font-size: 14px; padding: 6px 12px;">Complete</span>
+                                @elseif($statusValue == 4)
+                                    <span class="badge bg-success" style="font-size: 14px; padding: 6px 12px;">Received</span>
+                                @else
+                                    <span class="badge bg-secondary" style="font-size: 14px; padding: 6px 12px;">Unknown</span>
+                                @endif
+                            </div>
                         </div>
 
                         <div class="col">

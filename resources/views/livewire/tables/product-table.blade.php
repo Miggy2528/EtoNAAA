@@ -80,8 +80,14 @@
                         </a>
                     </th>
                     <th scope="col" class="align-middle text-center">
+                        <a wire:click.prevent="sortBy('buying_price')" href="#" role="button">
+                            {{ __('Cost/Unit') }}
+                            @include('includes._sort-icon', ['field' => 'buying_price'])
+                        </a>
+                    </th>
+                    <th scope="col" class="align-middle text-center">
                         <a wire:click.prevent="sortBy('price_per_kg')" href="#" role="button">
-                            {{ __('Price/kg') }}
+                            {{ __('Price per KG') }}
                             @include('includes._sort-icon', ['field' => 'price_per_kg'])
                         </a>
                     </th>
@@ -111,13 +117,11 @@
                     <td class="align-middle text-center">
                         {{ $product->quantity }}
                     </td>
-                    <td class="align-middle text-center">
-                        ₱{{ number_format($product->price_per_kg, 2) }}
-                        @if($product->unit)
-                            /{{ $product->unit->name }}
-                        @else
-                            /kg
-                        @endif
+                    <td class="align-middle text-end">
+                        ₱{{ number_format($product->buying_price ?? 0, 2) }}
+                    </td>
+                    <td class="align-middle text-end">
+                        ₱{{ number_format($product->price_per_kg ?? 0, 2) }}
                     </td>
                     <td class="align-middle text-center" {!! $product->expiration_date && $product->expiration_date->isPast() ? 'style="background-color: #f8d7da;"' : '' !!}>
                         {{ $product->expiration_date ? $product->expiration_date->format('M d, Y') : 'N/A' }}

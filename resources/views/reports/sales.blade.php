@@ -1,5 +1,15 @@
 @extends('layouts.butcher')
 
+@push('page-styles')
+<style>
+    .stat-card { border-left: 4px solid var(--primary-color); transition: transform .2s, box-shadow .2s; }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,.1); }
+    .page-title { display: flex; align-items: center; font-weight: 700; }
+    .card-header .card-title { font-weight: 600; }
+    #salesTrendChart { max-height: 320px; }
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid">
     <div class="row">
@@ -7,17 +17,17 @@
             <div class="page-header d-print-none">
                 <div class="row align-items-center">
                     <div class="col">
-                        <h2 class="page-title">Sales Analytics</h2>
+                        <h1 class="page-title"><i class="fas fa-chart-line me-2"></i>Sales Analytics</h1>
                         <div class="text-muted mt-1">Sales performance, trends, and revenue insights</div>
                     </div>
                     <div class="col-auto ms-auto d-print-none">
-                        <a href="{{ route('reports.index') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('reports.index') }}" class="btn btn-outline-secondary me-2" style="font-weight:600;">
                             <i class="fas fa-arrow-left"></i> Back to Reports
                         </a>
-                        <button onclick="refreshData()" class="btn btn-primary">
+                        <button onclick="refreshData()" class="btn btn-primary me-2" style="font-weight:600;">
                             <i class="fas fa-sync-alt"></i> Refresh Data
                         </button>
-                        <button onclick="exportData()" class="btn btn-success">
+                        <button onclick="exportData()" class="btn btn-success" style="font-weight:600;">
                             <i class="fas fa-file-export"></i> Export
                         </button>
                     </div>
@@ -27,9 +37,37 @@
     </div>
 
     <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <form id="dateFilterForm" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label mb-0">Date From</label>
+                            <input type="date" name="date_from" id="dateFrom" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label mb-0">Date To</label>
+                            <input type="date" name="date_to" id="dateTo" class="form-control">
+                        </div>
+                        <div class="col-md-6 d-flex gap-2">
+                            <button type="button" onclick="applyDateFilter()" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i>Apply Filter
+                            </button>
+                            <button type="button" onclick="resetDateFilter()" class="btn btn-secondary">
+                                <i class="fas fa-redo me-1"></i>Reset
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
     <div class="row mb-4" id="summaryCards">
         <div class="col-md-3">
-            <div class="card">
+            <div class="card stat-card">
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-auto">
@@ -46,7 +84,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card">
+            <div class="card stat-card">
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-auto">
@@ -63,7 +101,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card">
+            <div class="card stat-card">
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-auto">
@@ -80,7 +118,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card">
+            <div class="card stat-card">
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-auto">
@@ -123,15 +161,15 @@
     <!-- Sales Trend Chart -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
+            <div class="card stat-card">
                 <div class="card-header">
-                    <h3 class="card-title">7-Day Sales Trend</h3>
+                    <h3 class="card-title"><i class="fas fa-chart-area me-2"></i>7-Day Sales Trend</h3>
                     <div class="card-actions">
                         <span class="badge bg-success" id="lastUpdated">Last updated: Never</span>
                     </div>
                 </div>
                 <div class="card-body">
-                    <canvas id="salesTrendChart" height="100"></canvas>
+                    <canvas id="salesTrendChart" height="280"></canvas>
                 </div>
             </div>
         </div>
@@ -140,7 +178,7 @@
     <!-- Sales Performance Metrics -->
     <div class="row">
         <div class="col-md-6">
-            <div class="card">
+            <div class="card stat-card">
                 <div class="card-header">
                     <h3 class="card-title">Sales Performance</h3>
                 </div>
@@ -155,7 +193,7 @@
             </div>
         </div>
         <div class="col-md-6">
-            <div class="card">
+            <div class="card stat-card">
                 <div class="card-header">
                     <h3 class="card-title">Revenue Insights</h3>
                 </div>
@@ -174,7 +212,7 @@
     <!-- Sales Trend Data Table -->
     <div class="row mt-4">
         <div class="col-12">
-            <div class="card">
+            <div class="card stat-card">
                 <div class="card-header">
                     <h3 class="card-title">Daily Sales Breakdown (Last 7 Days)</h3>
                 </div>
@@ -220,7 +258,18 @@ document.addEventListener('DOMContentLoaded', function() {
 // Load sales analytics data
 async function loadSalesData() {
     try {
-        const response = await fetch('/api/analytics/sales');
+        const dateFrom = document.getElementById('dateFrom').value;
+        const dateTo = document.getElementById('dateTo').value;
+        let url = '/api/analytics/sales';
+        
+        if (dateFrom || dateTo) {
+            const params = new URLSearchParams();
+            if (dateFrom) params.append('date_from', dateFrom);
+            if (dateTo) params.append('date_to', dateTo);
+            url += '?' + params.toString();
+        }
+        
+        const response = await fetch(url);
         const data = await response.json();
         
         if (data.status === 'success') {
@@ -379,7 +428,9 @@ function updateSalesChart() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            elements: { point: { radius: 3 } },
             scales: {
+                x: { grid: { display: false } },
                 y: {
                     beginAtZero: true,
                     ticks: {
@@ -390,9 +441,13 @@ function updateSalesChart() {
                 }
             },
             plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
+                legend: { display: true, position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            return '₱' + ctx.parsed.y.toLocaleString();
+                        }
+                    }
                 }
             }
         }
@@ -532,6 +587,18 @@ function showError(message) {
     
     performanceContainer.innerHTML = errorHtml;
     insightsContainer.innerHTML = errorHtml;
+}
+
+// Apply date filter
+function applyDateFilter() {
+    loadSalesData();
+}
+
+// Reset date filter
+function resetDateFilter() {
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    loadSalesData();
 }
 </script>
 @endpush

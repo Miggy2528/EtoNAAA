@@ -19,10 +19,17 @@ use PhpOffice\PhpSpreadsheet\Writer\Xls;
 
 class PurchaseController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $query = Purchase::with('supplier')->latest();
+
+        // Filter by supplier if supplier_id is provided
+        if ($request->filled('supplier_id')) {
+            $query->where('supplier_id', $request->supplier_id);
+        }
+
         return view('purchases.index', [
-            'purchases' => Purchase::latest()->get(),
+            'purchases' => $query->get(),
         ]);
     }
 
@@ -77,11 +84,28 @@ class PurchaseController extends Controller
             $pDetails = [];
 
             foreach ($request->invoiceProducts as $product) {
+                // Skip rows without a selected product or quantity
+                if (!isset($product['product_id']) || !$product['product_id'] || !isset($product['quantity']) || !$product['quantity']) {
+                    continue;
+                }
+
                 $pDetails['purchase_id'] = $purchase['id'];
-                $pDetails['product_id'] = $product['product_id'];
-                $pDetails['quantity'] = $product['quantity'];
-                $pDetails['unitcost'] = $product['unitcost'];
-                $pDetails['total'] = $product['total'];
+                $pDetails['product_id'] = (int) $product['product_id'];
+                $pDetails['quantity'] = (int) $product['quantity'];
+
+                // Sanitize numeric strings that may be formatted
+                $unitcostRaw = $product['unitcost'] ?? 0;
+                $totalRaw = $product['total'] ?? 0;
+                $unitcost = (float) str_replace(',', '', $unitcostRaw);
+                $total = (float) str_replace(',', '', $totalRaw);
+
+                // Fallback to calculated total if missing
+                if ($total <= 0 && $unitcost > 0 && $pDetails['quantity'] > 0) {
+                    $total = $unitcost * $pDetails['quantity'];
+                }
+
+                $pDetails['unitcost'] = $unitcost;
+                $pDetails['total'] = $total;
                 $pDetails['created_at'] = Carbon::now();
 
                 //PurchaseDetails::insert($pDetails);
@@ -90,8 +114,8 @@ class PurchaseController extends Controller
         }
 
         return redirect()
-            ->route('purchases.index')
-            ->with('success', 'Purchase has been created!');
+            ->route('suppliers.show', $purchase->supplier_id)
+            ->with('success', 'Purchase has been created and is available in the supplier orders module.');
     }
 
     public function update(Purchase $purchase, Request $request)
@@ -122,6 +146,31 @@ class PurchaseController extends Controller
         return redirect()
             ->route('purchases.index')
             ->with('success', 'Purchase has been deleted!');
+    }
+
+    /**
+     * Mark purchase as received (admin side)
+     */
+    public function markAsReceived(Purchase $purchase)
+    {
+        $statusValue = is_object($purchase->status) ? $purchase->status->value : $purchase->status;
+        
+        // Only allow marking as received if status is Complete (3)
+        if ($statusValue != 3) {
+            return redirect()
+                ->route('purchases.show', $purchase)
+                ->with('error', 'Purchase can only be marked as received when it is in Complete status.');
+        }
+
+        $purchase->update([
+            'status' => 4, // RECEIVED
+            'updated_by' => auth()->user()->id,
+            'notes' => ($purchase->notes ?? '') . "\n\n[Admin - " . now()->format('Y-m-d H:i') . "]: Order marked as Received by " . auth()->user()->name
+        ]);
+
+        return redirect()
+            ->route('purchases.show', $purchase)
+            ->with('success', 'Purchase has been marked as received!');
     }
 
     public function dailyPurchaseReport()

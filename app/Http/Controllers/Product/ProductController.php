@@ -52,16 +52,69 @@ class ProductController extends Controller
             $query->where('meat_cut_id', $request->meat_cut_id);
         }
 
+        // New filters: meat type, quality, preparation type (from MeatCut)
+        if ($request->filled('meat_type')) {
+            $query->whereHas('meatCut', function($mq) use ($request) {
+                $mq->where('meat_type', $request->meat_type);
+            });
+        }
+        if ($request->filled('meat_subtype')) {
+            $query->whereHas('meatCut', function($mq) use ($request) {
+                $mq->where('meat_subtype', $request->meat_subtype);
+            });
+        }
+        if ($request->filled('quality')) {
+            $query->whereHas('meatCut', function($mq) use ($request) {
+                $mq->where('quality', $request->quality);
+            });
+        }
+        if ($request->filled('quality_grade')) {
+            $query->whereHas('meatCut', function($mq) use ($request) {
+                $mq->where('quality_grade', $request->quality_grade);
+            });
+        }
+        if ($request->filled('preparation_type')) {
+            $query->whereHas('meatCut', function($mq) use ($request) {
+                $mq->where('preparation_type', $request->preparation_type);
+            });
+        }
+        if ($request->filled('preparation_style')) {
+            $query->whereHas('meatCut', function($mq) use ($request) {
+                $mq->where('preparation_style', $request->preparation_style);
+            });
+        }
+
         $products = $query->orderBy('name')->paginate(12);
         
         // Get data for filters
         $categories = Category::all(['id', 'name']);
         $meatCuts = MeatCut::all(['id', 'name']);
+        $meatTypes = MeatCut::select('meat_type')->whereNotNull('meat_type')->distinct()->pluck('meat_type');
+        $meatSubtypes = MeatCut::select('meat_subtype')
+            ->whereNotNull('meat_subtype')
+            ->when($request->meat_type, function($q) use ($request) { $q->where('meat_type', $request->meat_type); })
+            ->distinct()->pluck('meat_subtype');
+        $qualities = MeatCut::select('quality')->whereNotNull('quality')->distinct()->pluck('quality');
+        $qualityGrades = MeatCut::select('quality_grade')
+            ->whereNotNull('quality_grade')
+            ->when($request->quality, function($q) use ($request) { $q->where('quality', $request->quality); })
+            ->distinct()->pluck('quality_grade');
+        $preparations = MeatCut::select('preparation_type')->whereNotNull('preparation_type')->distinct()->pluck('preparation_type');
+        $preparationStyles = MeatCut::select('preparation_style')
+            ->whereNotNull('preparation_style')
+            ->when($request->preparation_type, function($q) use ($request) { $q->where('preparation_type', $request->preparation_type); })
+            ->distinct()->pluck('preparation_style');
 
         return view('products.index', [
             'products' => $products,
             'categories' => $categories,
             'meatCuts' => $meatCuts,
+            'meatTypes' => $meatTypes,
+            'meatSubtypes' => $meatSubtypes,
+            'qualities' => $qualities,
+            'qualityGrades' => $qualityGrades,
+            'preparations' => $preparations,
+            'preparationStyles' => $preparationStyles,
         ]);
     }
 
@@ -89,7 +142,14 @@ class ProductController extends Controller
     public function store(StoreProductRequest $request)
     {
         try {
-            $product = Product::create($request->all());
+            $meatCut = MeatCut::find($request->meat_cut_id);
+            $data = $request->except('selling_price');
+            if ($meatCut) {
+                $data['price_per_kg'] = $meatCut->default_price_per_kg;
+                // Keep DB consistent if selling_price column exists
+                $data['selling_price'] = $data['price_per_kg'];
+            }
+            $product = Product::create($data);
 
             // Set who created the product
             $product->updated_by = auth()->id();
@@ -176,7 +236,18 @@ class ProductController extends Controller
             }
         }
 
-        $product->update($request->except('product_image'));
+        $data = $request->except(['product_image', 'selling_price']);
+        if ($request->meat_cut_id) {
+            $meatCut = MeatCut::find($request->meat_cut_id);
+            if ($meatCut) {
+                $data['price_per_kg'] = $meatCut->default_price_per_kg;
+                // Keep DB consistent if selling_price column exists
+                $data['selling_price'] = $data['price_per_kg'];
+            }
+        }
+
+-        $product->update($request->except('product_image'));
++        $product->update($data);
         
         // Set who updated the product
         $product->updated_by = auth()->id();

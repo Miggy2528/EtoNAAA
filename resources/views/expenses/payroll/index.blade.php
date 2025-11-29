@@ -33,7 +33,17 @@
                     <tbody>
                         @forelse($records as $record)
                         <tr>
-                            <td>{{ $record->user->name ?? 'N/A' }}</td>
+                            <td>
+                                @if($record->staff)
+                                    {{ $record->staff->name }}
+                                    <br><small class="text-muted">{{ $record->staff->position }}</small>
+                                @elseif($record->user)
+                                    {{ $record->user->name }}
+                                    <br><small class="text-muted">{{ ucfirst($record->user->role ?? 'N/A') }}</small>
+                                @else
+                                    <span class="text-muted">N/A</span>
+                                @endif
+                            </td>
                             <td>{{ date('F', mktime(0, 0, 0, $record->month, 1)) }}</td>
                             <td>{{ $record->year }}</td>
                             <td class="text-end">{{ number_format($record->basic_salary, 2) }}</td>
@@ -41,8 +51,8 @@
                             <td class="text-end">{{ number_format($record->deductions, 2) }}</td>
                             <td class="text-end">{{ number_format($record->total_salary, 2) }}</td>
                             <td>
-                                <span class="badge badge-{{ $record->status === 'paid' ? 'success' : 'warning' }}">
-                                    {{ ucfirst($record->status) }}
+                                <span class="badge bg-{{ $record->status === 'paid' ? 'success' : 'warning' }} text-dark">
+                                    <i class="fas fa-{{ $record->status === 'paid' ? 'check-circle' : 'clock' }} me-1"></i>{{ ucfirst($record->status) }}
                                 </span>
                             </td>
                         </tr>

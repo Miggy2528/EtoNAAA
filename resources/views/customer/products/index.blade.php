@@ -502,7 +502,7 @@
                                         </p>
                                         
                                         <div class="price">
-                                            ₱{{ number_format($product->selling_price ?? 0, 2) }}
+                                            ₱{{ number_format($product->price_per_kg ?? 0, 2) }}
                                         </div>
                                         
                                         <div class="product-meta">

@@ -302,7 +302,7 @@
     </div>
 </div>
 
-@push('scripts')
+@push('page-scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // Monthly Procurement Cost Trends Chart
@@ -310,23 +310,8 @@
     const monthlyTrendsChart = new Chart(monthlyTrendsCtx, {
         type: 'line',
         data: {
-            labels: {!! json_encode($monthlyTrends->pluck('month')) !!},
-            datasets: [{
-                label: 'Total Cost (₱)',
-                data: {!! json_encode($monthlyTrends->pluck('total_cost')) !!},
-                borderColor: 'rgb(75, 192, 192)',
-                backgroundColor: 'rgba(75, 192, 192, 0.1)',
-                tension: 0.4,
-                fill: true
-            }, {
-                label: 'Procurement Count',
-                data: {!! json_encode($monthlyTrends->pluck('procurement_count')) !!},
-                borderColor: 'rgb(255, 159, 64)',
-                backgroundColor: 'rgba(255, 159, 64, 0.1)',
-                tension: 0.4,
-                fill: true,
-                yAxisID: 'y1'
-            }]
+            labels: @json($monthlySupplierTrends['months']),
+            datasets: @json($monthlySupplierDatasets),
         },
         options: {
             responsive: true,

@@ -1,4 +1,4 @@
-@extends('layouts.tabler')
+@extends('layouts.butcher')
 
 @section('content')
 <div class="page-body">
@@ -32,8 +32,8 @@
                                     </div>
 
                                     {{--- {{ URL::previous() }} ---}}
-                                    <a href="{{ route('purchases.index') }}" class="btn-action">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M18 6l-12 12"></path><path d="M6 6l12 12"></path></svg>
+                                    <a href="{{ url()->previous() ?: route('purchases.index') }}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-1"></i> Back
                                     </a>
                                 </div>
                             </div>
@@ -69,24 +69,6 @@
                                         :data="$suppliers"
                                     />
 
-                                    <div class="col-md-4">
-                                        <label for="reference" class="form-label required">
-                                            {{ __('Reference') }}
-                                        </label>
-
-                                        <input type="text" class="form-control"
-                                               id="reference"
-                                               name="reference"
-                                               value="PRS"
-                                               readonly
-                                        >
-
-                                        @error('reference')
-                                        <div class="invalid-feedback">
-                                            {{ $message }}
-                                        </div>
-                                        @enderror
-                                    </div>
                                 </div>
 
                                 @livewire('purchase-form')

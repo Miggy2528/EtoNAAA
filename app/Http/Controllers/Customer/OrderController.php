@@ -102,11 +102,11 @@ class OrderController extends Controller
                 }
 
                 $totalProducts += $item['quantity'];
-                $subTotal += $product->selling_price * $item['quantity'];
+                $subTotal += $product->price_per_kg * $item['quantity'];
                 $items[] = [
                     'product' => $product,
                     'quantity' => $item['quantity'],
-                    'price' => $product->selling_price,
+                    'price' => $product->price_per_kg,
                 ];
             }
 
@@ -237,6 +237,26 @@ class OrderController extends Controller
             }
             return back()->with('error', 'Failed to cancel order: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Mark order as received by customer
+     */
+    public function received(Request $request, Order $order)
+    {
+        $customer = $request->user();
+
+        if ($order->customer_id !== $customer->id) {
+            return back()->with('error', 'Order not found.');
+        }
+
+        if ($order->order_status === OrderStatus::COMPLETE || $order->order_status === OrderStatus::CANCELLED) {
+            return back()->with('error', 'This order cannot be marked as received.');
+        }
+
+        $order->update(['order_status' => OrderStatus::COMPLETE]);
+
+        return back()->with('success', 'Order marked as received.');
     }
 
     /**

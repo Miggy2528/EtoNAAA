@@ -115,42 +115,63 @@
                             <i class="fas fa-chart-line me-1"></i> Dashboard
                         </a>
                     </li>
+                    @if(!Auth::user()->isSupplier())
                     <li class="nav-item">
                         <a class="nav-link" wire:navigate href="{{ route('meat-cuts.index') }}">
                             <i class="fas fa-drumstick-bite me-1"></i> Meat Cuts
                         </a>
                     </li>
+                    @endif
+                    @if(Auth::user()->isSupplier())
+                    <li class="nav-item">
+                        <a class="nav-link" wire:navigate href="{{ route('supplier.purchases.index') }}">
+                            <i class="fas fa-shopping-cart me-1"></i> Orders
+                        </a>
+                    </li>
+                    @else
                     <li class="nav-item">
                         <a class="nav-link" wire:navigate href="{{ route('orders.index') }}">
                             <i class="fas fa-shopping-cart me-1"></i> Orders
                         </a>
                     </li>
+                    @endif
+                    @if(!Auth::user()->isSupplier())
                     <li class="nav-item">
                         <a class="nav-link" wire:navigate href="{{ route('products.index') }}">
                             <i class="fas fa-box me-1"></i> Products
                         </a>
                     </li>
+                    @endif
+                    @if(!Auth::user()->isSupplier())
                     <li class="nav-item">
                         <a class="nav-link" wire:navigate href="{{ route('suppliers.index') }}">
                             <i class="fas fa-truck me-1"></i> Suppliers
                         </a>
                     </li>
+                    @endif
 
                     @if(Auth::user()->isAdmin())
-                    <li class="nav-item">
-                        <a class="nav-link" wire:navigate href="{{ route('expenses.index') }}">
-                            <i class="fas fa-money-bill-wave me-1"></i> Expenses
-                        </a>
-                    </li>
                     <li class="nav-item">
                         <a class="nav-link" wire:navigate href="{{ route('reports.index') }}">
                             <i class="fas fa-chart-line me-1"></i> Reports
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" wire:navigate href="{{ route('staff.index') }}">
-                            <i class="fas fa-users me-1"></i> Staff
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-h me-1"></i> Others
                         </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" wire:navigate href="{{ route('expenses.index') }}">
+                                    <i class="fas fa-money-bill-wave me-1"></i> Expenses
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" wire:navigate href="{{ route('staff.index') }}">
+                                    <i class="fas fa-users me-1"></i> Staff
+                                </a>
+                            </li>
+                        </ul>
                     </li>
                     @endif
                 </ul>

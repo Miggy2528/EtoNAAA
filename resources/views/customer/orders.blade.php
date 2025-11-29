@@ -378,6 +378,15 @@
                                                 <i class="fas fa-eye me-1"></i>View
                                             </a>
 
+                                            @if($order->order_status === \App\Enums\OrderStatus::FOR_DELIVERY)
+                                                <form action="{{ route('customer.orders.received', $order->id) }}" method="POST" class="d-inline">
+                                                    @csrf
+                                                    <button type="submit" class="btn btn-view btn-outline-success me-1">
+                                                        <i class="fas fa-check me-1"></i>Received
+                                                    </button>
+                                                </form>
+                                            @endif
+
                                             @if($order->order_status === \App\Enums\OrderStatus::PENDING)
                                                 <button type="button" class="btn btn-cancel btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelOrderModal{{ $order->id }}">
                                                     <i class="fas fa-times me-1"></i>Cancel

@@ -1,4 +1,4 @@
-@extends('layouts.tabler')
+@extends('layouts.butcher')
 
 @section('content')
 <header class="page-header page-header-dark bg-gradient-primary-to-secondary pb-10">

@@ -22,15 +22,18 @@ class SupplierController extends Controller
 
     public function index()
     {
-        $suppliers = Supplier::withCount('procurements')
-            ->with(['procurements' => function($query) {
-                $query->selectRaw('supplier_id, 
-                    COUNT(*) as total_deliveries,
-                    SUM(total_cost) as total_spent,
-                    SUM(CASE WHEN status = "on-time" THEN 1 ELSE 0 END) as on_time_deliveries,
-                    AVG(defective_rate) as avg_defect_rate')
-                ->groupBy('supplier_id');
-            }])
+        $suppliers = Supplier::withCount(['procurements', 'purchases'])
+            ->with([
+                'purchases',
+                'procurements' => function($query) {
+                    $query->selectRaw('supplier_id, 
+                        COUNT(*) as total_deliveries,
+                        SUM(total_cost) as total_spent,
+                        SUM(CASE WHEN status = "on-time" THEN 1 ELSE 0 END) as on_time_deliveries,
+                        AVG(defective_rate) as avg_defect_rate')
+                    ->groupBy('supplier_id');
+                }
+            ])
             ->latest()
             ->paginate(10);
             
@@ -61,6 +64,9 @@ class SupplierController extends Controller
 
     public function show(Supplier $supplier)
     {
+        // Load relationships to avoid N+1 queries
+        $supplier->load(['purchases', 'products']);
+        
         $products = $supplier->products;
         
         // Get procurement statistics

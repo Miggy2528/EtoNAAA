@@ -97,12 +97,12 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td class="text-dark">Buying Prices</td>
+                                        <td class="text-dark">Cost/Unit Price</td>
                                         <td class="text-dark">{{ $product->buying_price }}</td>
                                     </tr>
                                     <tr>
-                                        <td class="text-dark">Selling Price</td>
-                                        <td class="text-dark">{{ $product->selling_price }}</td>
+                                        <td class="text-dark">Price per KG</td>
+                                        <td class="text-dark">{{ $product->price_per_kg }}</td>
                                     </tr>
                                     <tr>
                                         <td class="text-dark">Expiration Date</td>

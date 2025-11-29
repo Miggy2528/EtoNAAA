@@ -39,16 +39,16 @@ class ProductController extends Controller
         if ($request->has('price_range') && $request->price_range) {
             switch ($request->price_range) {
                 case '0-100':
-                    $query->where('selling_price', '>=', 0)->where('selling_price', '<=', 100);
+                    $query->where('price_per_kg', '>=', 0)->where('price_per_kg', '<=', 100);
                     break;
                 case '101-200':
-                    $query->where('selling_price', '>=', 101)->where('selling_price', '<=', 200);
+                    $query->where('price_per_kg', '>=', 101)->where('price_per_kg', '<=', 200);
                     break;
                 case '201-500':
-                    $query->where('selling_price', '>=', 201)->where('selling_price', '<=', 500);
+                    $query->where('price_per_kg', '>=', 201)->where('price_per_kg', '<=', 500);
                     break;
                 case '501+':
-                    $query->where('selling_price', '>', 501);
+                    $query->where('price_per_kg', '>', 501);
                     break;
             }
         }
@@ -73,7 +73,7 @@ class ProductController extends Controller
         }
 
         // Sort by price (default)
-        $query->orderBy('selling_price', 'asc');
+        $query->orderBy('price_per_kg', 'asc');
 
         $products = $query->paginate(12);
         $categories = Category::all();
@@ -120,16 +120,16 @@ class ProductController extends Controller
         if ($request->has('price_range') && $request->price_range) {
             switch ($request->price_range) {
                 case '0-100':
-                    $query->where('selling_price', '>=', 0)->where('selling_price', '<=', 100);
+                    $query->where('price_per_kg', '>=', 0)->where('price_per_kg', '<=', 100);
                     break;
                 case '101-200':
-                    $query->where('selling_price', '>=', 101)->where('selling_price', '<=', 200);
+                    $query->where('price_per_kg', '>=', 101)->where('price_per_kg', '<=', 200);
                     break;
                 case '201-500':
-                    $query->where('selling_price', '>=', 201)->where('selling_price', '<=', 500);
+                    $query->where('price_per_kg', '>=', 201)->where('price_per_kg', '<=', 500);
                     break;
                 case '501+':
-                    $query->where('selling_price', '>', 501);
+                    $query->where('price_per_kg', '>', 501);
                     break;
             }
         }
@@ -154,7 +154,7 @@ class ProductController extends Controller
         }
 
         // Sort by price (default)
-        $query->orderBy('selling_price', 'asc');
+        $query->orderBy('price_per_kg', 'asc');
 
         $products = $query->paginate(12);
         $categories = Category::all();

@@ -12,6 +12,9 @@
                         <a href="{{ route('suppliers.create') }}" class="btn btn-primary">
                             <i class="fas fa-plus"></i> Add New Supplier
                         </a>
+                        <a href="{{ route('purchases.create') }}" class="btn btn-success ms-2">
+                            <i class="fas fa-shopping-cart"></i> Order Products
+                        </a>
                     </div>
                     @endcan
                 </div>

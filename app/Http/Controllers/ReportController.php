@@ -187,23 +187,55 @@ class ReportController extends Controller
     /**
      * Get sales analytics
      */
-    public function salesAnalytics(): JsonResponse
+    public function salesAnalytics(Request $request): JsonResponse
     {
         try {
-            // Total sales (sum of all completed orders)
-            $totalSales = Order::where('order_status', OrderStatus::COMPLETE)->sum('total');
+            // Get date range from request
+            $dateFrom = $request->get('date_from');
+            $dateTo = $request->get('date_to');
+
+            // Build base query
+            $ordersQuery = Order::where('order_status', OrderStatus::COMPLETE);
             
-            // Average daily sales (last 30 days)
-            $averageDailySales = Order::where('order_status', OrderStatus::COMPLETE)
-                ->where('order_date', '>=', Carbon::now()->subDays(30))
-                ->avg('total');
+            if ($dateFrom && $dateTo) {
+                $ordersQuery->whereBetween('order_date', [
+                    Carbon::parse($dateFrom)->startOfDay(),
+                    Carbon::parse($dateTo)->endOfDay()
+                ]);
+            } elseif ($dateFrom) {
+                $ordersQuery->where('order_date', '>=', Carbon::parse($dateFrom)->startOfDay());
+            } elseif ($dateTo) {
+                $ordersQuery->where('order_date', '<=', Carbon::parse($dateTo)->endOfDay());
+            }
+            
+            // Total sales (sum of all completed orders)
+            $totalSales = (clone $ordersQuery)->sum('total');
+            
+            // Average daily sales (last 30 days or date range)
+            $daysCount = 30;
+            if ($dateFrom && $dateTo) {
+                $daysCount = Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo)) + 1;
+            }
+            $averageDailySales = $daysCount > 0 ? $totalSales / $daysCount : 0;
             
             // Highest selling product by quantity
-            $topProductByQuantity = OrderDetails::select('products.name', 'products.id', DB::raw('SUM(order_details.quantity) as total_quantity'))
+            $topProductQuery = OrderDetails::select('products.name', 'products.id', DB::raw('SUM(order_details.quantity) as total_quantity'))
                 ->join('products', 'order_details.product_id', '=', 'products.id')
                 ->join('orders', 'order_details.order_id', '=', 'orders.id')
-                ->where('orders.order_status', OrderStatus::COMPLETE)
-                ->groupBy('products.id', 'products.name')
+                ->where('orders.order_status', OrderStatus::COMPLETE);
+                
+            if ($dateFrom && $dateTo) {
+                $topProductQuery->whereBetween('orders.order_date', [
+                    Carbon::parse($dateFrom)->startOfDay(),
+                    Carbon::parse($dateTo)->endOfDay()
+                ]);
+            } elseif ($dateFrom) {
+                $topProductQuery->where('orders.order_date', '>=', Carbon::parse($dateFrom)->startOfDay());
+            } elseif ($dateTo) {
+                $topProductQuery->where('orders.order_date', '<=', Carbon::parse($dateTo)->endOfDay());
+            }
+                
+            $topProductByQuantity = $topProductQuery->groupBy('products.id', 'products.name')
                 ->orderBy('total_quantity', 'desc')
                 ->first();
             

@@ -1,4 +1,4 @@
-@extends('layouts.tabler')
+@extends('layouts.butcher')
 
 @section('content')
 <header class="page-header page-header-compact page-header-light border-bottom bg-white mb-4">

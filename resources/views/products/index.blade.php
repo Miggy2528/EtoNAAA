@@ -56,6 +56,84 @@
                         </select>
                     </div>
 
+                    {{-- Meat Type Filter --}}
+                    <div class="col-md-2">
+                        <label class="form-label">Meat Type</label>
+                        <select name="meat_type" class="form-select">
+                            <option value="">All Types</option>
+                            @foreach($meatTypes as $type)
+                                <option value="{{ $type }}" {{ request('meat_type') == $type ? 'selected' : '' }}>
+                                    {{ ucfirst($type) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Quality Filter --}}
+                    <div class="col-md-2">
+                        <label class="form-label">Quality</label>
+                        <select name="quality" class="form-select">
+                            <option value="">All Qualities</option>
+                            @foreach($qualities as $quality)
+                                <option value="{{ $quality }}" {{ request('quality') == $quality ? 'selected' : '' }}>
+                                    {{ ucfirst($quality) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Preparation Type Filter --}}
+                    <div class="col-md-2">
+                        <label class="form-label">Preparation</label>
+                        <select name="preparation_type" class="form-select">
+                            <option value="">All Preparations</option>
+                            @foreach($preparations as $prep)
+                                <option value="{{ $prep }}" {{ request('preparation_type') == $prep ? 'selected' : '' }}>
+                                    {{ ucfirst($prep) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Meat Subtype Filter (depends on Meat Type) --}}
+                    <div class="col-md-2">
+                        <label class="form-label">Meat Subtype</label>
+                        <select name="meat_subtype" class="form-select">
+                            <option value="">All Subtypes</option>
+                            @foreach($meatSubtypes as $sub)
+                                <option value="{{ $sub }}" {{ request('meat_subtype') == $sub ? 'selected' : '' }}>
+                                    {{ ucfirst($sub) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Quality Grade Filter (depends on Quality) --}}
+                    <div class="col-md-2">
+                        <label class="form-label">Quality Grade</label>
+                        <select name="quality_grade" class="form-select">
+                            <option value="">All Grades</option>
+                            @foreach($qualityGrades as $grade)
+                                <option value="{{ $grade }}" {{ request('quality_grade') == $grade ? 'selected' : '' }}>
+                                    {{ strtoupper($grade) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Preparation Style Filter (depends on Preparation) --}}
+                    <div class="col-md-2">
+                        <label class="form-label">Preparation Style</label>
+                        <select name="preparation_style" class="form-select">
+                            <option value="">All Styles</option>
+                            @foreach($preparationStyles as $style)
+                                <option value="{{ $style }}" {{ request('preparation_style') == $style ? 'selected' : '' }}>
+                                    {{ ucfirst($style) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     {{-- Stock Status Filter --}}
                     <div class="col-md-2">
                         <label class="form-label">Stock Status</label>
@@ -105,7 +183,7 @@
                             @endif
                         </div>
                         <p class="mb-1"><strong>Code:</strong> {{ $product->code }}</p>
-                        <p class="mb-1"><strong>Price:</strong> ₱{{ number_format($product->selling_price, 2) }}</p>
+                        <p class="mb-1"><strong>Price:</strong> ₱{{ number_format($product->price_per_kg, 2) }}</p>
                         <p class="mb-1">
                             <strong>Stock:</strong> 
                             <span class="badge 
@@ -116,6 +194,7 @@
                                 {{ $product->quantity }} {{ $product->unit->name ?? 'pcs' }}
                             </span>
                         </p>
+                        <p class="mb-1"><strong>Cost/Unit Price:</strong> ₱{{ number_format($product->buying_price ?? 0, 2) }}</p>
                         @if($product->quantity_alert)
                             <p class="mb-1"><small class="text-muted">Alert Level: {{ $product->quantity_alert }}</small></p>
                         @endif

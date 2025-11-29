@@ -19,7 +19,13 @@ class MeatCut extends Model
         'quantity',
         'is_available',
         'minimum_stock_level',
-        'image_path'
+                'image_path',
+                'meat_type',
+                'meat_subtype',
+                'quality',
+                'quality_grade',
+                'preparation_type',
+                'preparation_style'
     ];
 
     protected $casts = [

@@ -201,11 +201,6 @@
                                                  value="{{ old('buying_price') }}" />
                                     </div>
 
-                                    <div class="col-sm-6 col-md-6">
-                                        <x-input type="number" label="Selling Price" name="selling_price"
-                                                 id="selling_price" placeholder="0"
-                                                 value="{{ old('selling_price') }}" />
-                                    </div>
 
                                     <div class="col-sm-6 col-md-6">
                                         <x-input type="number" label="Quantity" name="quantity" id="quantity"

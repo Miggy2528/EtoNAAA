@@ -18,7 +18,7 @@
                 <div class="btn-list">
                     <a href="{{ route('supplier.purchases.index') }}" class="btn btn-primary d-none d-sm-inline-block">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" /><rect x="9" y="3" width="6" height="4" rx="2" /></svg>
-                        View My Purchases
+                        View Orders from Admin
                     </a>
                 </div>
             </div>
@@ -42,25 +42,11 @@
 
         <!-- Statistics Cards -->
         <div class="row row-deck row-cards mb-3">
-            <div class="col-sm-6 col-lg-3">
+            <div class="col-sm-6 col-lg-4">
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex align-items-center">
-                            <div class="subheader">Products Supplied</div>
-                        </div>
-                        <div class="h1 mb-3">{{ $stats['total_products'] }}</div>
-                        <div class="d-flex mb-2">
-                            <div>Total products in catalog</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-sm-6 col-lg-3">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="subheader">Pending Purchases</div>
+                            <div class="subheader">Pending Orders</div>
                         </div>
                         <div class="h1 mb-3">{{ $stats['pending_purchases'] }}</div>
                         <div class="d-flex mb-2">
@@ -70,11 +56,11 @@
                 </div>
             </div>
             
-            <div class="col-sm-6 col-lg-3">
+            <div class="col-sm-6 col-lg-4">
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex align-items-center">
-                            <div class="subheader">Completed Purchases</div>
+                            <div class="subheader">Completed Orders</div>
                         </div>
                         <div class="h1 mb-3">{{ $stats['completed_purchases'] }}</div>
                         <div class="d-flex mb-2">
@@ -84,7 +70,7 @@
                 </div>
             </div>
             
-            <div class="col-sm-6 col-lg-3">
+            <div class="col-sm-6 col-lg-4">
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex align-items-center">
@@ -92,7 +78,7 @@
                         </div>
                         <div class="h1 mb-3">₱{{ number_format($stats['total_revenue'], 2) }}</div>
                         <div class="d-flex mb-2">
-                            <div>From approved purchases</div>
+                            <div>From approved orders</div>
                         </div>
                     </div>
                 </div>
@@ -145,8 +131,8 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" /><rect x="9" y="3" width="6" height="4" rx="2" /></svg>
                                     </div>
                                     <div class="flex-fill">
-                                        <div class="font-weight-medium">View Purchase Orders</div>
-                                        <div class="text-muted">Track and manage purchase orders</div>
+                                        <div class="font-weight-medium">View Orders from Admin</div>
+                                        <div class="text-muted">Track and manage orders placed by admin</div>
                                     </div>
                                 </div>
                             </a>
@@ -157,7 +143,7 @@
                                     </div>
                                     <div class="flex-fill">
                                         <div class="font-weight-medium">Track Deliveries</div>
-                                        <div class="text-muted">Monitor procurement deliveries</div>
+                                        <div class="text-muted">Monitor order deliveries and fulfillment</div>
                                     </div>
                                 </div>
                             </a>
@@ -175,8 +161,8 @@
                         <h3 class="card-title">Welcome to Supplier Portal</h3>
                     </div>
                     <div class="card-body">
-                        <p>This is your supplier dashboard where you can manage your products, view orders, and track your business performance.</p>
-                        <p class="mb-0">More features will be added soon to help you manage your supplier operations efficiently.</p>
+                        <p>This is your supplier dashboard where you can view orders from the admin, track deliveries, and monitor your business performance.</p>
+                        <p class="mb-0">Use the quick actions above to manage your orders and deliveries efficiently.</p>
                     </div>
                 </div>
             </div>

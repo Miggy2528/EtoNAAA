@@ -11,15 +11,15 @@ class ProcurementDataSeeder extends Seeder
 {
     /**
      * Run the database seeds.
-     * Creates procurement records for the first 4 suppliers
+     * Creates procurement records for 2025 (Jan-Oct) for the first 2 suppliers
      */
     public function run(): void
     {
-        // Get first 4 suppliers
-        $suppliers = Supplier::take(4)->get();
+        // Get first 2 suppliers (Magnolia and A.U)
+        $suppliers = Supplier::take(2)->get();
         
-        if ($suppliers->count() < 4) {
-            $this->command->warn('Less than 4 suppliers found. Please add more suppliers first.');
+        if ($suppliers->count() < 2) {
+            $this->command->warn('Less than 2 suppliers found. Please add more suppliers first.');
             return;
         }
 
@@ -34,81 +34,87 @@ class ProcurementDataSeeder extends Seeder
         // Delete existing procurement data to avoid duplicates
         Procurement::truncate();
         
-        $this->command->info('Creating procurement records for 4 suppliers...');
+        $this->command->info('Creating procurement records for 2025 (Jan-Oct) for 2 suppliers...');
 
         // Define procurement data for each supplier
         $supplierProcurements = [
-            // Supplier 1 - Highest performer (52 deliveries, ₱685,000)
+            // Supplier 1 - Magnolia (Higher volume)
             0 => [
-                'total_deliveries' => 52,
-                'total_cost' => 685000,
+                'procurements_per_month' => [3, 4, 3, 5, 4, 3, 4, 5, 3, 4], // Jan-Oct
+                'avg_cost_per_procurement' => 13500,
                 'on_time_percentage' => 92,
             ],
-            // Supplier 2 - Second best (46 deliveries, ₱598,000)
+            // Supplier 2 - A.U (Slightly lower volume)
             1 => [
-                'total_deliveries' => 46,
-                'total_cost' => 598000,
-                'on_time_percentage' => 93,
-            ],
-            // Supplier 3 - Third (38 deliveries, ₱425,000)
-            2 => [
-                'total_deliveries' => 38,
-                'total_cost' => 425000,
+                'procurements_per_month' => [3, 3, 4, 3, 4, 3, 3, 4, 3, 3], // Jan-Oct
+                'avg_cost_per_procurement' => 12800,
                 'on_time_percentage' => 89,
-            ],
-            // Supplier 4 - Fourth (32 deliveries, ₱375,000)
-            3 => [
-                'total_deliveries' => 32,
-                'total_cost' => 375000,
-                'on_time_percentage' => 91,
             ],
         ];
 
         foreach ($suppliers as $index => $supplier) {
             $config = $supplierProcurements[$index];
-            $totalDeliveries = $config['total_deliveries'];
-            $totalCost = $config['total_cost'];
+            $monthlyDistribution = $config['procurements_per_month'];
+            $avgCost = $config['avg_cost_per_procurement'];
             $onTimePercentage = $config['on_time_percentage'];
             
-            $avgCostPerDelivery = $totalCost / $totalDeliveries;
-            $onTimeCount = (int)($totalDeliveries * ($onTimePercentage / 100));
+            $totalProcurements = array_sum($monthlyDistribution);
+            $onTimeCount = (int)($totalProcurements * ($onTimePercentage / 100));
+            $procurementCounter = 0;
 
-            $this->command->info("Creating {$totalDeliveries} procurements for: {$supplier->name}");
+            $this->command->info("Creating {$totalProcurements} procurements for: {$supplier->name}");
 
-            for ($i = 0; $i < $totalDeliveries; $i++) {
-                // Distribute procurements over last 12 months
-                $monthsAgo = rand(0, 11);
-                $deliveryDate = Carbon::now()->subMonths($monthsAgo)->subDays(rand(0, 28));
-                $expectedDeliveryDate = (clone $deliveryDate)->subDays(rand(0, 3));
+            // Loop through months Jan-Oct 2025
+            for ($month = 1; $month <= 10; $month++) {
+                $procurementsThisMonth = $monthlyDistribution[$month - 1];
                 
-                // Determine if on-time or delayed
-                $isOnTime = $i < $onTimeCount;
-                $status = $isOnTime ? 'on-time' : 'delayed';
-                
-                // Randomize cost slightly
-                $variance = rand(-2000, 2000);
-                $cost = max(5000, $avgCostPerDelivery + $variance);
-                
-                // Random quantity
-                $quantity = rand(50, 200);
-                
-                // Defective rate (1-3%)
-                $defectiveRate = rand(10, 30) / 10;
+                for ($i = 0; $i < $procurementsThisMonth; $i++) {
+                    // Random day within the month
+                    $day = rand(1, min(28, Carbon::create(2025, $month, 1)->daysInMonth));
+                    $deliveryDate = Carbon::create(2025, $month, $day);
+                    
+                    // Expected delivery date 2-5 days before actual delivery
+                    $expectedDeliveryDate = (clone $deliveryDate)->subDays(rand(2, 5));
+                    
+                    // Determine if on-time or delayed
+                    $isOnTime = $procurementCounter < $onTimeCount;
+                    $status = $isOnTime ? 'on-time' : 'delayed';
+                    
+                    // If delayed, adjust delivery date to be after expected
+                    if (!$isOnTime) {
+                        $deliveryDate = (clone $expectedDeliveryDate)->addDays(rand(1, 7));
+                    }
+                    
+                    // Randomize cost slightly (±20%)
+                    $variance = rand(-20, 20) / 100;
+                    $cost = round($avgCost * (1 + $variance), 2);
+                    
+                    // Random quantity
+                    $quantity = rand(50, 200);
+                    
+                    // Defective rate (0.5-4%)
+                    $defectiveRate = rand(5, 40) / 10;
 
-                Procurement::create([
-                    'supplier_id' => $supplier->id,
-                    'product_id' => $products->random()->id,
-                    'quantity_supplied' => $quantity,
-                    'total_cost' => $cost,
-                    'expected_delivery_date' => $expectedDeliveryDate,
-                    'delivery_date' => $deliveryDate,
-                    'status' => $status,
-                    'defective_rate' => $defectiveRate,
-                ]);
+                    Procurement::create([
+                        'supplier_id' => $supplier->id,
+                        'product_id' => $products->random()->id,
+                        'quantity_supplied' => $quantity,
+                        'total_cost' => $cost,
+                        'expected_delivery_date' => $expectedDeliveryDate,
+                        'delivery_date' => $deliveryDate,
+                        'status' => $status,
+                        'defective_rate' => $defectiveRate,
+                        'created_at' => $deliveryDate,
+                        'updated_at' => $deliveryDate,
+                    ]);
+                    
+                    $procurementCounter++;
+                }
             }
         }
 
-        $this->command->info('✅ Procurement data seeded successfully for 4 suppliers!');
+        $this->command->info('✅ Procurement data seeded successfully for 2 suppliers!');
         $this->command->info('Total procurements created: ' . Procurement::count());
+        $this->command->info('Data range: January 2025 - October 2025');
     }
 }

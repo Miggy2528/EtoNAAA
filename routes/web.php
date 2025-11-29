@@ -100,6 +100,7 @@ Route::middleware(['customer.web.auth'])->group(function () {
     Route::get('/my-orders', [OrderController::class, 'myOrders'])->name('customer.orders');
     Route::get('/my-orders/{order}', [\App\Http\Controllers\Customer\OrderController::class, 'showOrder'])->name('customer.orders.show');
     Route::post('/my-orders/{order}/cancel', [\App\Http\Controllers\Customer\OrderController::class, 'cancel'])->name('customer.orders.cancel');
+    Route::post('/my-orders/{order}/received', [\App\Http\Controllers\Customer\OrderController::class, 'received'])->name('customer.orders.received');
     Route::post('/customer/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('customer.orders.cancel.admin');
     Route::get('/customer/orders/{order}/download-invoice', [\App\Http\Controllers\Customer\OrderController::class, 'downloadInvoice'])->name('customer.orders.download-invoice');
 
@@ -156,13 +157,16 @@ Route::middleware(['auth:web', 'role:supplier'])->prefix('supplier')->name('supp
     Route::get('/dashboard', [App\Http\Controllers\Supplier\DashboardController::class, 'index'])->name('dashboard');
     Route::post('/logout', [App\Http\Controllers\Supplier\SupplierAuthController::class, 'logout'])->name('logout');
     
-    // Supplier Purchases
+    // Supplier Purchases - Enhanced with communication
     Route::get('/purchases', [App\Http\Controllers\Supplier\PurchaseController::class, 'index'])->name('purchases.index');
     Route::get('/purchases/{id}', [App\Http\Controllers\Supplier\PurchaseController::class, 'show'])->name('purchases.show');
+    Route::post('/purchases/{id}/notes', [App\Http\Controllers\Supplier\PurchaseController::class, 'updateNotes'])->name('purchases.update-notes');
+    Route::post('/purchases/{id}/delivery-status', [App\Http\Controllers\Supplier\PurchaseController::class, 'updateDeliveryStatus'])->name('purchases.update-delivery-status');
     
-    // Supplier Deliveries/Procurements
+    // Supplier Deliveries/Procurements - Enhanced with status updates
     Route::get('/deliveries', [App\Http\Controllers\Supplier\DeliveryController::class, 'index'])->name('deliveries.index');
     Route::get('/deliveries/{id}', [App\Http\Controllers\Supplier\DeliveryController::class, 'show'])->name('deliveries.show');
+    Route::post('/deliveries/{id}/status', [App\Http\Controllers\Supplier\DeliveryController::class, 'updateStatus'])->name('deliveries.update-status');
 });
 
 // ============================================================================
@@ -288,6 +292,7 @@ Route::post('/admin/orders/{order}/status', [OrderController::class, 'updateOrde
     Route::get('/purchases/{purchase}/edit', [PurchaseController::class, 'edit'])->name('purchases.edit');
     Route::put('/purchases/{purchase}/edit', [PurchaseController::class, 'update'])->name('purchases.update');
     Route::delete('/purchases/{purchase}', [PurchaseController::class, 'destroy'])->name('purchases.delete');
+    Route::post('/purchases/{purchase}/mark-received', [PurchaseController::class, 'markAsReceived'])->name('purchases.mark-received');
 
     // Supplier Management Routes
     Route::resource('suppliers', SupplierController::class);
@@ -318,10 +323,12 @@ Route::post('/admin/orders/{order}/status', [OrderController::class, 'updateOrde
         // Expense Management Routes
         Route::prefix('expenses')->name('expenses.')->group(function () {
             Route::get('/', [\App\Http\Controllers\ExpenseController::class, 'index'])->name('index');
+            Route::get('/voided', [\App\Http\Controllers\ExpenseController::class, 'voided'])->name('voided');
             
             // Utility Expenses
             Route::resource('utilities', \App\Http\Controllers\UtilityExpenseController::class);
             Route::post('utilities/{utilityExpense}/mark-paid', [\App\Http\Controllers\UtilityExpenseController::class, 'markAsPaid'])->name('utilities.mark-paid');
+            Route::post('utilities/{utilityExpense}/void', [\App\Http\Controllers\UtilityExpenseController::class, 'void'])->name('utilities.void');
             
             // Payroll
             Route::resource('payroll', \App\Http\Controllers\PayrollController::class);
@@ -331,6 +338,10 @@ Route::post('/admin/orders/{order}/status', [OrderController::class, 'updateOrde
             // Other Expenses
             Route::resource('other', \App\Http\Controllers\OtherExpenseController::class);
         });
+        
+        // Income Report Routes
+        Route::get('/reports/income', [\App\Http\Controllers\IncomeReportController::class, 'index'])->name('reports.income');
+        Route::get('/reports/income/export-csv', [\App\Http\Controllers\IncomeReportController::class, 'exportCsv'])->name('reports.income.export-csv');
         
 
         

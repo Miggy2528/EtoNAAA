@@ -64,13 +64,13 @@ class CreateTestOrder extends Command
             'order_date' => now()->timezone('Asia/Manila')->format('Y-m-d'),
             'order_status' => OrderStatus::PENDING,
             'total_products' => 1,
-            'sub_total' => $product->selling_price,
-            'vat' => $product->selling_price * 0.12,
-            'total' => $product->selling_price * 1.12,
+            'sub_total' => $product->price_per_kg,
+            'vat' => $product->price_per_kg * 0.12,
+            'total' => $product->price_per_kg * 1.12,
             'invoice_no' => 'INV-' . now()->format('YmdHis'),
             'payment_type' => 'cash',
             'pay' => 0,
-            'due' => $product->selling_price * 1.12,
+            'due' => $product->price_per_kg * 1.12,
         ]);
         
         // Create order details
@@ -78,8 +78,8 @@ class CreateTestOrder extends Command
             'order_id' => $order->id,
             'product_id' => $product->id,
             'quantity' => 1,
-            'unitcost' => $product->selling_price,
-            'total' => $product->selling_price,
+            'unitcost' => $product->price_per_kg,
+            'total' => $product->price_per_kg,
         ]);
         
         $this->info("✅ Test order created successfully!");

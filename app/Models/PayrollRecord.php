@@ -12,8 +12,11 @@ class PayrollRecord extends Model
 
     protected $fillable = [
         'user_id',
+        'staff_id',
         'month',
         'year',
+        'working_days',
+        'daily_rate',
         'basic_salary',
         'bonuses',
         'deductions',
@@ -25,12 +28,22 @@ class PayrollRecord extends Model
     ];
 
     protected $casts = [
+        'working_days' => 'integer',
+        'daily_rate' => 'decimal:2',
         'basic_salary' => 'decimal:2',
         'bonuses' => 'decimal:2',
         'deductions' => 'decimal:2',
         'total_salary' => 'decimal:2',
         'payment_date' => 'date',
     ];
+
+    /**
+     * Get the staff member
+     */
+    public function staff(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class);
+    }
 
     /**
      * Get the staff member (user)

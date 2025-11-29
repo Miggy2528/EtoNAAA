@@ -12,6 +12,8 @@
                         @can('update', $supplier)
                         <a href="{{ route('suppliers.edit', $supplier) }}" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>
                         @endcan
+                        <a href="{{ route('purchases.create') }}" class="btn btn-sm btn-success"><i class="fas fa-shopping-cart"></i> Order</a>
+                        <a href="{{ route('purchases.index') }}?supplier_id={{ $supplier->id }}" class="btn btn-sm btn-info"><i class="fas fa-list"></i> My Orders</a>
                         <a href="{{ route('suppliers.index') }}" class="btn btn-sm btn-secondary"><i class="fas fa-arrow-left"></i></a>
                     </div>
                 </div>

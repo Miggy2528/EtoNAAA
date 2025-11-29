@@ -57,8 +57,8 @@ final class ProductsTable extends PowerGridComponent
             ->addColumn('unit_name', function (Product $product){
                 return $product->unit->short_code;
             })
-
-            ->addColumn('selling_price');
+            ->addColumn('buying_price')
+            ->addColumn('price_per_kg');
     }
 
     public function columns(): array
@@ -95,9 +95,15 @@ final class ProductsTable extends PowerGridComponent
                 ->headerAttribute('text-center')
                 ->bodyAttribute('text-center'),
 
-            Column::make('Selling Price', 'selling_price')
+            Column::make('Cost/Unit', 'buying_price')
                 ->headerAttribute('align-middle text-center')
-                ->bodyAttribute('align-middle text-center')
+                ->bodyAttribute('align-middle text-end')
+                ->sortable()
+                ->searchable(),
+
+            Column::make('Price per KG', 'price_per_kg')
+                ->headerAttribute('align-middle text-center')
+                ->bodyAttribute('align-middle text-end')
                 ->sortable()
                 ->searchable(),
 

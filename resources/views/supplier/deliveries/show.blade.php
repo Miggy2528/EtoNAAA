@@ -49,7 +49,7 @@
                             <div class="col-md-6">
                                 <label class="form-label text-muted">Product</label>
                                 <div class="fw-bold">{{ $procurement->product->name ?? 'N/A' }}</div>
-                                <div class="text-muted small">Code: {{ $procurement->product->code ?? 'N/A' }}</div>
+                                <div class="text-muted small">Code: {{ $procurement->product->code ?? 'No Code' }}</div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label text-muted">Status</label>

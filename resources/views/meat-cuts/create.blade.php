@@ -15,8 +15,8 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">New Meat Cut Details</h3>
-                    <a href="{{ route('meat-cuts.index') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left me-2"></i>Back to List
+                    <a href="{{ route('meat-cuts.index') }}" class="btn btn-secondary" style="color: white;">
+                        <i class="fas fa-arrow-left me-2" style="color: white;"></i>Back to List
                     </a>
                 </div>
                 <div class="card-body">
@@ -32,10 +32,10 @@
 
                     <form action="{{ route('meat-cuts.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
-                        @include('meat-cuts.form')
+                        @include('meat-cuts.form', ['prefillData' => $prefillData ?? []])
                         <div class="form-group mt-4">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>Save Meat Cut
+                            <button type="submit" class="btn btn-primary" style="color: white;">
+                                <i class="fas fa-save me-2" style="color: white;"></i>Save Meat Cut
                             </button>
                         </div>
                     </form>
@@ -50,6 +50,12 @@
 <style>
     .card-header {
         border-bottom: none;
+    }
+    .form-label {
+        font-weight: 500;
+    }
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     }
 </style>
 @endpush 

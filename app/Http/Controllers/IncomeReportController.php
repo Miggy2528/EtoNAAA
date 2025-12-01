@@ -27,7 +27,7 @@ class IncomeReportController extends Controller
         $endDate = Carbon::parse($dateTo)->endOfDay();
         
         // Calculate total sales from completed orders
-        $totalSales = Order::where('order_status', OrderStatus::COMPLETE)
+        $totalSales = Order::whereIn('order_status', [OrderStatus::COMPLETE, '1', 1])
             ->whereBetween('order_date', [$startDate, $endDate])
             ->sum('total');
         
@@ -98,7 +98,7 @@ class IncomeReportController extends Controller
             $monthEnd = $current->copy()->endOfMonth();
             
             // Sales for the month
-            $sales = Order::where('order_status', OrderStatus::COMPLETE)
+            $sales = Order::whereIn('order_status', [OrderStatus::COMPLETE, '1', 1])
                 ->whereBetween('order_date', [$monthStart, $monthEnd])
                 ->sum('total');
             
@@ -148,7 +148,7 @@ class IncomeReportController extends Controller
             $dayStart = $current->copy()->startOfDay();
             $dayEnd = $current->copy()->endOfDay();
             
-            $sales = Order::where('order_status', OrderStatus::COMPLETE)
+            $sales = Order::whereIn('order_status', [OrderStatus::COMPLETE, '1', 1])
                 ->whereBetween('order_date', [$dayStart, $dayEnd])
                 ->sum('total');
             

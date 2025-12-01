@@ -144,4 +144,20 @@ class Product extends Model
     {
         return $this->hasOne(ProductUpdateLog::class)->latestOfMany();
     }
+    
+    /**
+     * Get all purchase details for this product
+     */
+    public function purchaseDetails()
+    {
+        return $this->hasMany(PurchaseDetails::class);
+    }
+    
+    /**
+     * Get all purchases for this product through purchase details
+     */
+    public function purchases()
+    {
+        return $this->hasManyThrough(Purchase::class, PurchaseDetails::class, 'product_id', 'id', 'id', 'purchase_id');
+    }
 } 

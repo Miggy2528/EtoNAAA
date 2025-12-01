@@ -68,12 +68,18 @@ class Supplier extends Model
 
     public function scopeSearch($query, $value): void
     {
-        $query->where('name', 'like', "%{$value}%")
-            ->orWhere('email', 'like', "%{$value}%")
-            ->orWhere('phone', 'like', "%{$value}%")
-            ->orWhere('shopname', 'like', "%{$value}%")
-            ->orWhere('type', 'like', "%{$value}%")
-            ->orWhere('status', 'like', "%{$value}%");
+        if (!$value) {
+            return;
+        }
+        
+        $query->where(function($q) use ($value) {
+            $q->where('name', 'like', "%{$value}%")
+              ->orWhere('email', 'like', "%{$value}%")
+              ->orWhere('phone', 'like', "%{$value}%")
+              ->orWhere('shopname', 'like', "%{$value}%")
+              ->orWhere('type', 'like', "%{$value}%")
+              ->orWhere('status', 'like', "%{$value}%");
+        });
     }
 
     public function getTypeNameAttribute(): string

@@ -17,8 +17,8 @@ use PowerComponents\LivewirePowerGrid\PowerGridComponent;
 
 final class SuppliersTable extends PowerGridComponent
 {
-    public int $perPage = 5;
-    public array $perPageValues = [0, 5, 10, 20, 50];
+    public int $perPage = 10;
+    public array $perPageValues = [10, 25, 50, 100];
 
     public function setUp(): array
     {
@@ -27,17 +27,20 @@ final class SuppliersTable extends PowerGridComponent
                 ->striped()
                 ->type(Exportable::TYPE_XLS, Exportable::TYPE_CSV),
 
-            Header::make()->showSearchInput(),
+            Header::make()
+                ->showSearchInput()
+                ->showToggleColumns(),
 
             Footer::make()
                 ->showPerPage($this->perPage, $this->perPageValues)
-                ->showRecordCount(),
+                ->showRecordCount('min')
         ];
     }
 
     public function datasource(): Builder
     {
-        return Supplier::query();
+        return Supplier::query()
+            ->withCount('procurements');
     }
 
     public function addColumns(): PowerGridColumns
@@ -45,9 +48,12 @@ final class SuppliersTable extends PowerGridComponent
         return PowerGrid::columns()
             ->addColumn('id')
             ->addColumn('name')
-            ->addColumn('name_lower', fn (Supplier $model) => strtolower(e($model->name)))
+            ->addColumn('shopname')
+            ->addColumn('email')
+            ->addColumn('phone')
             ->addColumn('type')
             ->addColumn('status')
+            ->addColumn('procurements_count')
             ->addColumn('created_at')
             ->addColumn('created_at_formatted', fn (Supplier $model) => Carbon::parse($model->created_at)->format('d/m/Y'));
     }
@@ -61,23 +67,70 @@ final class SuppliersTable extends PowerGridComponent
                 ->searchable()
                 ->sortable(),
 
-            Column::make('Name', 'name')
+            Column::make('Supplier', 'name')
                 ->headerAttribute('text-left')
                 ->bodyAttribute('text-left')
                 ->searchable()
-                ->sortable(),
+                ->sortable()
+                ->format(
+                    fn (Supplier $model) => "<div class='d-flex align-items-center'>
+                        <div class='bg-light rounded-circle me-3 d-flex align-items-center justify-content-center' style='width: 40px; height: 40px;'>
+                            <i class='fas fa-user text-muted'></i>
+                        </div>
+                        <div>
+                            <div class='font-weight-medium'>{$model->name}</div>
+                            <div class='text-muted small'>{$model->shopname}</div>
+                        </div>
+                    </div>"
+                ),
+
+            Column::make('Contact', 'email')
+                ->headerAttribute('text-left')
+                ->bodyAttribute('text-left')
+                ->searchable()
+                ->sortable()
+                ->format(
+                    fn (Supplier $model) => "<div class='text-muted small'>{$model->email}</div>
+                        <div class='text-muted small'>{$model->phone}</div>"
+                ),
 
             Column::make('Type', 'type')
                 ->headerAttribute('text-center')
                 ->bodyAttribute('text-center')
                 ->searchable()
-                ->sortable(),
+                ->sortable()
+                ->format(
+                    fn (Supplier $model) => "<span class='badge bg-primary-subtle text-primary text-uppercase'>
+                        {$model->type}
+                    </span>"
+                ),
 
             Column::make('Status', 'status')
                 ->headerAttribute('text-center')
                 ->bodyAttribute('text-center')
                 ->searchable()
-                ->sortable(),
+                ->sortable()
+                ->format(
+                    fn (Supplier $model) => "<span class='badge ' . ($model->status == 'active' ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger') . ' text-uppercase'>
+                        {$model->status}
+                    </span>"
+                ),
+
+            Column::make('Procurements', 'procurements_count')
+                ->headerAttribute('text-center')
+                ->bodyAttribute('text-center')
+                ->searchable()
+                ->sortable()
+                ->format(
+                    fn (Supplier $model) => "<div class='d-flex align-items-center justify-content-center'>
+                        <div class='me-2'>
+                            <i class='fas fa-boxes text-primary'></i>
+                        </div>
+                        <div>
+                            <div class='fw-bold'>{$model->procurements_count}</div>
+                        </div>
+                    </div>"
+                ),
 
             Column::make('Created at', 'created_at')
                 ->headerAttribute('text-center')
@@ -89,9 +142,9 @@ final class SuppliersTable extends PowerGridComponent
                 ->bodyAttribute('text-center')
                 ->searchable(),
 
-            Column::action('Action')
+            Column::action('Actions')
                 ->headerAttribute('text-center', styleAttr: 'width: 150px;')
-                ->bodyAttribute('text-center d-flex justify-content-around')
+                ->bodyAttribute('text-center')
         ];
     }
 
@@ -111,21 +164,23 @@ final class SuppliersTable extends PowerGridComponent
     public function actions(\App\Models\Supplier $row): array
     {
         return [
-            Button::make('show', file_get_contents('assets/svg/eye.svg'))
-                ->class('btn btn-outline-info btn-icon w-100')
-                ->tooltip('Show Supplier Details')
+            Button::make('show')
+                ->slot('<i class="fas fa-eye"></i>')
+                ->class('btn btn-outline-primary btn-sm')
+                ->tooltip('View Details')
                 ->route('suppliers.show', ['supplier' => $row])
                 ->method('get'),
 
-            Button::make('edit', file_get_contents('assets/svg/edit.svg'))
-                ->class('btn btn-outline-warning btn-icon w-100')
+            Button::make('edit')
+                ->slot('<i class="fas fa-edit"></i>')
+                ->class('btn btn-outline-warning btn-sm')
+                ->tooltip('Edit Supplier')
                 ->route('suppliers.edit', ['supplier' => $row])
-                ->method('get')
-                ->tooltip('Edit Supplier'),
+                ->method('get'),
 
             Button::add('delete')
-                ->slot(file_get_contents('assets/svg/trash.svg'))
-                ->class('btn btn-outline-danger btn-icon w-100')
+                ->slot('<i class="fas fa-trash"></i>')
+                ->class('btn btn-outline-danger btn-sm')
                 ->tooltip('Delete Supplier')
                 ->route('suppliers.destroy', ['supplier' => $row])
                 ->method('delete'),

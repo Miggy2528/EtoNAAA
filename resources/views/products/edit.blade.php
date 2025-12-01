@@ -6,7 +6,7 @@
         <div class="row g-2 align-items-center mb-3">
             <div class="col">
                 <h2 class="page-title">
-                    {{ __('Edit Product') }}
+                    <i class="fas fa-edit me-2"></i>{{ __('Edit Product') }}
                 </h2>
             </div>
         </div>
@@ -19,24 +19,27 @@
     <div class="container-xl">
         <div class="row row-cards">
 
-            <form action="{{ route('products.update', $product) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('products.update', $product) }}" method="POST" enctype="multipart/form-data" id="product-edit-form">
                 @csrf
                 @method('put')
+                {{-- Debug information --}}
+                <input type="hidden" name="_debug" value="1">
 
                 <div class="row">
                     <div class="col-lg-4">
                         <div class="card">
-                            <div class="card-body">
+                            <div class="card-header">
                                 <h3 class="card-title">
-                                    {{ __('Product Image') }}
+                                    <i class="fas fa-image me-2"></i>{{ __('Product Image') }}
                                 </h3>
-
+                            </div>
+                            <div class="card-body">
                                 <img
                                     class="img-account-profile mb-2"
                                     src="{{ $product->product_image ? asset('storage/products/'.$product->product_image) : asset('assets/img/products/default.webp') }}"
                                     id="image-preview"
                                     alt="{{ $product->name }}"
-                                    style="width: 100%; height: auto; max-height: 400px; object-fit: contain; border: 1px solid #dee2e6; padding: 10px; border-radius: 8px; background-color: #fff;"
+                                    style="width: 100%; height: auto; max-height: 300px; object-fit: contain; border: 1px solid #dee2e6; padding: 10px; border-radius: 8px; background-color: #fff;"
                                 >
 
                                 <div class="small font-italic text-muted mb-2">
@@ -59,16 +62,88 @@
                                 @enderror
                             </div>
                         </div>
+                        
+                        {{-- Meat Classification Card --}}
+                        <div class="card mt-3">
+                            <div class="card-header bg-info text-white">
+                                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Meat Classification</h5>
+                            </div>
+                            <div class="card-body">
+                                @if($product->meatCut)
+                                <div class="meat-info">
+                                    <h5>{{ $product->meatCut->name }}</h5>
+                                    <div class="classification-badges mb-3">
+                                        {{-- Removed animal_type display as requested --}}
+                                        @if($product->meatCut->meat_type)
+                                        <span class="badge bg-primary me-1 mb-1">{{ ucfirst($product->meatCut->meat_type) }}</span>
+                                        @endif
+                                        @if($product->meatCut->quality)
+                                        <span class="badge bg-success me-1 mb-1">{{ ucfirst($product->meatCut->quality) }}</span>
+                                        @endif
+                                        @if($product->meatCut->preparation_type)
+                                        <span class="badge bg-warning text-dark me-1 mb-1">{{ ucfirst($product->meatCut->preparation_type) }}</span>
+                                        @endif
+                                        @if($product->meatCut->meat_subtype)
+                                        <span class="badge bg-secondary me-1 mb-1">{{ ucfirst($product->meatCut->meat_subtype) }}</span>
+                                        @endif
+                                        @if($product->meatCut->quality_grade)
+                                        <span class="badge bg-dark me-1 mb-1">{{ strtoupper($product->meatCut->quality_grade) }}</span>
+                                        @endif
+                                        @if($product->meatCut->preparation_style)
+                                        <span class="badge bg-light text-dark me-1 mb-1">{{ ucfirst(str_replace('_', ' ', $product->meatCut->preparation_style)) }}</span>
+                                        @endif
+                                    </div>
+                                    
+                                    <div class="classification-details">
+                                        {{-- Removed animal_type display as requested --}}
+                                        @if($product->meatCut->meat_type)
+                                        <p class="mb-1"><strong>Meat Type:</strong> {{ ucfirst($product->meatCut->meat_type) }}</p>
+                                        @endif
+                                        @if($product->meatCut->quality)
+                                        <p class="mb-1"><strong>Quality:</strong> {{ ucfirst($product->meatCut->quality) }}</p>
+                                        @endif
+                                        @if($product->meatCut->preparation_type)
+                                        <p class="mb-1"><strong>Preparation:</strong> {{ ucfirst($product->meatCut->preparation_type) }}</p>
+                                        @endif
+                                        @if($product->meatCut->meat_subtype)
+                                        <p class="mb-1"><strong>Subtype:</strong> {{ ucfirst($product->meatCut->meat_subtype) }}</p>
+                                        @endif
+                                        @if($product->meatCut->quality_grade)
+                                        <p class="mb-1"><strong>Quality Grade:</strong> {{ strtoupper($product->meatCut->quality_grade) }}</p>
+                                        @endif
+                                        @if($product->meatCut->preparation_style)
+                                        <p class="mb-0"><strong>Prep Style:</strong> {{ ucfirst(str_replace('_', ' ', $product->meatCut->preparation_style)) }}</p>
+                                        @endif
+                                    </div>
+                                </div>
+                                @else
+                                <p class="text-muted">No meat cut information available</p>
+                                @endif
+                            </div>
+                        </div>
                     </div>
 
                     <div class="col-lg-8">
 
                         <div class="card">
-                            <div class="card-body">
+                            <div class="card-header">
                                 <h3 class="card-title">
-                                    {{ __('Product Details') }}
+                                    <i class="fas fa-box me-2"></i>{{ __('Product Details') }}
                                 </h3>
+                                <div class="card-actions">
+                                    <a href="{{ route('products.index') }}" class="btn-action">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24"
+                                             viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                                             stroke-linecap="round" stroke-linejoin="round">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                            <path d="M18 6l-12 12"></path>
+                                            <path d="M6 6l12 12"></path>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
 
+                            <div class="card-body">
                                 <div class="row row-cards">
                                     <div class="col-md-12">
                                         <div class="mb-3">
@@ -83,6 +158,7 @@
                                                    class="form-control @error('name') is-invalid @enderror"
                                                    placeholder="Product name"
                                                    value="{{ old('name', $product->name) }}"
+                                                   required
                                             >
 
                                             @error('name')
@@ -93,7 +169,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-sm-6 col-md-6">
+                                    <div class="col-md-6">
                                         <div class="mb-3">
                                             <label for="category_id" class="form-label">
                                                 Product category
@@ -102,6 +178,7 @@
 
                                             <select name="category_id" id="category_id"
                                                     class="form-select @error('category_id') is-invalid @enderror"
+                                                    required
                                             >
                                                 <option selected="" disabled="">Select a category:</option>
                                                 @foreach ($categories as $category)
@@ -118,7 +195,7 @@
                                     </div>
 
 
-                                    <div class="col-sm-6 col-md-6">
+                                    <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label" for="unit_id">
                                                 {{ __('Unit') }}
@@ -127,6 +204,7 @@
 
                                             <select name="unit_id" id="unit_id"
                                                     class="form-select @error('unit_id') is-invalid @enderror"
+                                                    required
                                             >
                                                 <option selected="" disabled="">
                                                     Select a unit:
@@ -145,7 +223,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-sm-6 col-md-6">
+                                    <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label" for="buying_price">
                                                 Buying price
@@ -158,6 +236,7 @@
                                                    class="form-control @error('buying_price') is-invalid @enderror"
                                                    placeholder="0"
                                                    value="{{ old('buying_price', $product->buying_price) }}"
+                                                   required
                                             >
 
                                             @error('buying_price')
@@ -169,7 +248,7 @@
                                     </div>
 
 
-                                    <div class="col-sm-6 col-md-6">
+                                    <div class="col-md-6">
                                         <div class="mb-3">
                                             <label for="quantity" class="form-label">
                                                 {{ __('Quantity') }}
@@ -183,6 +262,7 @@
                                                    min="0"
                                                    value="{{ old('quantity', $product->quantity) }}"
                                                    placeholder="0"
+                                                   required
                                             >
 
                                             @error('quantity')
@@ -193,7 +273,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-sm-6 col-md-6">
+                                    <div class="col-md-6">
                                         <div class="mb-3">
                                             <label for="quantity_alert" class="form-label">
                                                 {{ __('Quantity Alert') }}
@@ -205,8 +285,9 @@
                                                    name="quantity_alert"
                                                    class="form-control @error('quantity_alert') is-invalid @enderror"
                                                    min="0"
-                                                   placeholder="0"
                                                    value="{{ old('quantity_alert', $product->quantity_alert) }}"
+                                                   placeholder="0"
+                                                   required
                                             >
 
                                             @error('quantity_alert')
@@ -217,109 +298,76 @@
                                         </div>
                                     </div>
 
-                                    {{-- Meat Cut --}}
-                                    <div class="col-sm-6 col-md-6">
+                                    <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="meat_cut_id" class="form-label">
-                                                Meat Cut <span class="text-danger">*</span>
+                                            <label for="price_per_kg" class="form-label">
+                                                {{ __('Price Per KG') }}
+                                                <span class="text-danger">*</span>
                                             </label>
-                                            <select name="meat_cut_id" id="meat_cut_id"
-                                                    class="form-select @error('meat_cut_id') is-invalid @enderror">
-                                                <option selected disabled>Select a meat cut:</option>
-                                                @foreach ($meatCuts as $meatCut)
-                                                    <option value="{{ $meatCut->id }}"
-                                                        {{ old('meat_cut_id', $product->meat_cut_id) == $meatCut->id ? 'selected' : '' }}>
-                                                        {{ $meatCut->name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            @error('meat_cut_id')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-                                    </div>
 
-                                    {{-- Price per KG --}}
-                                    <div class="col-sm-6 col-md-6">
-                                        <div class="mb-3">
-                                            <label for="price_per_kg" class="form-label">Price per KG</label>
-                                            <input type="number" 
-                                                   name="price_per_kg" 
-                                                   id="price_per_kg" 
-                                                   class="form-control @error('price_per_kg') is-invalid @enderror" 
-                                                   placeholder="0.00" 
-                                                   value="{{ old('price_per_kg', $product->price_per_kg) }}" 
-                                                   step="0.01" 
-                                                   readonly>
-                                            <small class="form-text text-muted">This will be automatically set based on the selected meat cut</small>
+                                            <input type="number"
+                                                   id="price_per_kg"
+                                                   name="price_per_kg"
+                                                   class="form-control @error('price_per_kg') is-invalid @enderror"
+                                                   min="0"
+                                                   step="0.01"
+                                                   value="{{ old('price_per_kg', $product->price_per_kg) }}"
+                                                   placeholder="0.00"
+                                                   required
+                                            >
+
                                             @error('price_per_kg')
-                                            <div class="invalid-feedback">{{ $message }}</div>
+                                            <div class="invalid-feedback">
+                                                {{ $message }}
+                                            </div>
                                             @enderror
                                         </div>
                                     </div>
 
-                                    {{-- Source --}}
-                                    <div class="col-sm-6 col-md-6">
+                                    <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="source" class="form-label">Source</label>
-                                            <input type="text" 
-                                                   name="source" 
-                                                   id="source" 
-                                                   class="form-control @error('source') is-invalid @enderror" 
-                                                   placeholder="e.g., Local Farm"
-                                                   value="{{ old('source', $product->source) }}">
-                                            @error('source')
-                                            <div class="invalid-feedback">{{ $message }}</div>
-                                            @enderror
-                                        </div>
-                                    </div>
+                                            <label for="expiration_date" class="form-label">
+                                                {{ __('Expiration Date') }}
+                                            </label>
 
-                                    {{-- Expiration Date --}}
-                                    <div class="col-sm-6 col-md-6">
-                                        <div class="mb-3">
-                                            <label for="expiration_date" class="form-label">Expiration Date</label>
-                                            <input type="date" 
-                                                   name="expiration_date" 
-                                                   id="expiration_date" 
-                                                   class="form-control @error('expiration_date') is-invalid @enderror" 
-                                                   value="{{ old('expiration_date', $product->expiration_date ? $product->expiration_date->format('Y-m-d') : '') }}">
+                                            <input type="date"
+                                                   id="expiration_date"
+                                                   name="expiration_date"
+                                                   class="form-control @error('expiration_date') is-invalid @enderror"
+                                                   value="{{ old('expiration_date', $product->expiration_date ? $product->expiration_date->format('Y-m-d') : null) }}"
+                                            >
+
                                             @error('expiration_date')
-                                            <div class="invalid-feedback">{{ $message }}</div>
+                                            <div class="invalid-feedback">
+                                                {{ $message }}
+                                            </div>
                                             @enderror
                                         </div>
                                     </div>
 
                                     <div class="col-md-12">
-                                        <div class="mb-3 mb-0">
-                                            <label for="notes" class="form-label">
-                                                {{ __('Notes') }}
-                                            </label>
-
-                                            <textarea name="notes"
-                                                      id="notes"
-                                                      rows="5"
+                                        <div class="mb-3">
+                                            <label class="form-label" for="notes">{{ __('Notes') }}</label>
+                                            <textarea name="notes" id="notes"
                                                       class="form-control @error('notes') is-invalid @enderror"
-                                                      placeholder="Product notes"
-                                            >{{ old('notes', $product->notes) }}</textarea>
-
+                                                      rows="3" placeholder="Product notes...">{{ old('notes', $product->notes) }}</textarea>
                                             @error('notes')
                                             <div class="invalid-feedback">
                                                 {{ $message }}
                                             </div>
                                             @enderror
                                         </div>
-                                    </div>`
+                                    </div>
                                 </div>
                             </div>
 
                             <div class="card-footer text-end">
-                                <x-button.save type="submit">
-                                    {{ __('Update') }}
-                                </x-button.save>
-
-                                <x-button.back route="{{ route('products.index') }}">
-                                    {{ __('Cancel') }}
-                                </x-button.back>
+                                <button type="submit" class="btn btn-primary" id="update-button">
+                                    <i class="fas fa-save me-1"></i>{{ __('Update') }}
+                                </button>
+                                <a href="{{ route('products.index') }}" class="btn btn-secondary ms-2">
+                                    <i class="fas fa-times me-1"></i>{{ __('Cancel') }}
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -330,40 +378,42 @@
 </div>
 @endsection
 
-@pushonce('page-scripts')
-    <script src="{{ asset('assets/js/img-preview.js') }}"></script>
-    <script>
-        // Auto-populate price per kg based on meat cut selection
-        document.addEventListener('DOMContentLoaded', function() {
-            const meatCutSelect = document.getElementById('meat_cut_id');
-            const pricePerKgInput = document.getElementById('price_per_kg');
-            
-            // Meat cuts data with their default prices
-            const meatCutsData = @json($meatCuts->pluck('default_price_per_kg', 'id'));
-            
-            console.log('Meat cuts data:', meatCutsData); // Debug log
-            
-            if (meatCutSelect && pricePerKgInput) {
-                meatCutSelect.addEventListener('change', function() {
-                    const selectedMeatCutId = this.value;
-                    console.log('Selected meat cut ID:', selectedMeatCutId); // Debug log
-                    
-                    if (selectedMeatCutId && meatCutsData[selectedMeatCutId]) {
-                        pricePerKgInput.value = parseFloat(meatCutsData[selectedMeatCutId]).toFixed(2);
-                        console.log('Set price to:', pricePerKgInput.value); // Debug log
-                    } else {
-                        pricePerKgInput.value = '';
-                    }
-                });
-                
-                // Set initial value if meat cut is pre-selected
-                if (meatCutSelect.value && meatCutsData[meatCutSelect.value]) {
-                    pricePerKgInput.value = parseFloat(meatCutsData[meatCutSelect.value]).toFixed(2);
-                    console.log('Initial price set to:', pricePerKgInput.value); // Debug log
-                }
-            } else {
-                console.error('Required elements not found');
-            }
-        });
-    </script>
-@endpushonce
+@push('page-scripts')
+<script>
+    // Add form submission debugging
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('product-edit-form');
+        const updateButton = document.getElementById('update-button');
+        
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                console.log('Form is being submitted');
+                console.log('Form action:', form.action);
+                console.log('Form method:', form.method);
+                // Don't prevent default, just log for debugging
+            });
+        }
+        
+        if (updateButton) {
+            updateButton.addEventListener('click', function(e) {
+                console.log('Update button clicked');
+                // Don't prevent default, just log for debugging
+            });
+        }
+    });
+    
+    function previewImage() {
+        const image = document.querySelector('#image');
+        const imgPreview = document.querySelector('#image-preview');
+
+        imgPreview.style.display = 'block';
+
+        const oFReader = new FileReader();
+        oFReader.readAsDataURL(image.files[0]);
+
+        oFReader.onload = function (oFREvent) {
+            imgPreview.src = oFREvent.target.result;
+        }
+    }
+</script>
+@endpush

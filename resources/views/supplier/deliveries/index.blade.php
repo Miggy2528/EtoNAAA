@@ -42,7 +42,7 @@
                     <tbody>
                         @forelse($procurements as $procurement)
                             <tr>
-                                <td>{{ $procurement->product->product_name ?? 'N/A' }}</td>
+                                <td>{{ $procurement->product->name ?? 'N/A' }}</td>
                                 <td>{{ $procurement->quantity_supplied }} {{ $procurement->product->unit->name ?? '' }}</td>
                                 <td>{{ $procurement->expected_delivery_date ? $procurement->expected_delivery_date->format('M d, Y') : 'N/A' }}</td>
                                 <td>

@@ -13,19 +13,20 @@ class MeatCut extends Model
     protected $fillable = [
         'name',
         'description',
-        'animal_type',
+        'meat_type',
         'cut_type',
         'default_price_per_kg',
         'quantity',
         'is_available',
+        'is_by_product',
+        'is_processing_meat',
         'minimum_stock_level',
-                'image_path',
-                'meat_type',
-                'meat_subtype',
-                'quality',
-                'quality_grade',
-                'preparation_type',
-                'preparation_style'
+        'image_path',
+        'meat_subtype',
+        'quality',
+        'quality_grade',
+        'preparation_type',
+        'preparation_style'
     ];
 
     protected $casts = [
@@ -37,8 +38,8 @@ class MeatCut extends Model
 
     public $sortable = [
         'name',
-        'animal_type',
-        'cut_type',
+        'meat_type',
+        'quality_grade',
         'default_price_per_kg',
         'quantity',
         'is_available',

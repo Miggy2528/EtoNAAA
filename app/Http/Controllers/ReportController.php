@@ -195,7 +195,7 @@ class ReportController extends Controller
             $dateTo = $request->get('date_to');
 
             // Build base query
-            $ordersQuery = Order::where('order_status', OrderStatus::COMPLETE);
+            $ordersQuery = Order::whereIn('order_status', [OrderStatus::COMPLETE, '1', 1]);
             
             if ($dateFrom && $dateTo) {
                 $ordersQuery->whereBetween('order_date', [
@@ -222,7 +222,7 @@ class ReportController extends Controller
             $topProductQuery = OrderDetails::select('products.name', 'products.id', DB::raw('SUM(order_details.quantity) as total_quantity'))
                 ->join('products', 'order_details.product_id', '=', 'products.id')
                 ->join('orders', 'order_details.order_id', '=', 'orders.id')
-                ->where('orders.order_status', OrderStatus::COMPLETE);
+                ->whereIn('orders.order_status', [OrderStatus::COMPLETE, '1', 1]);
                 
             if ($dateFrom && $dateTo) {
                 $topProductQuery->whereBetween('orders.order_date', [
@@ -243,7 +243,7 @@ class ReportController extends Controller
             $topProductByRevenue = OrderDetails::select('products.name', 'products.id', DB::raw('SUM(order_details.total) as total_revenue'))
                 ->join('products', 'order_details.product_id', '=', 'products.id')
                 ->join('orders', 'order_details.order_id', '=', 'orders.id')
-                ->where('orders.order_status', OrderStatus::COMPLETE)
+                ->whereIn('orders.order_status', [OrderStatus::COMPLETE, '1', 1])
                 ->groupBy('products.id', 'products.name')
                 ->orderBy('total_revenue', 'desc')
                 ->first();
@@ -255,11 +255,11 @@ class ReportController extends Controller
                 $date = Carbon::now()->subDays($i);
                 $dateStr = $date->format('Y-m-d');
                 
-                $dailySales = Order::where('order_status', OrderStatus::COMPLETE)
+                $dailySales = Order::whereIn('order_status', [OrderStatus::COMPLETE, '1', 1])
                     ->whereDate('order_date', $dateStr)
                     ->sum('total');
                 
-                $dailyOrders = Order::where('order_status', OrderStatus::COMPLETE)
+                $dailyOrders = Order::whereIn('order_status', [OrderStatus::COMPLETE, '1', 1])
                     ->whereDate('order_date', $dateStr)
                     ->count();
                 
@@ -273,16 +273,16 @@ class ReportController extends Controller
             }
             
             // Additional metrics
-            $totalOrders = Order::where('order_status', OrderStatus::COMPLETE)->count();
+            $totalOrders = Order::whereIn('order_status', [OrderStatus::COMPLETE, '1', 1])->count();
             $averageOrderValue = $totalOrders > 0 ? $totalSales / $totalOrders : 0;
             
             // Monthly sales comparison
-            $currentMonthSales = Order::where('order_status', OrderStatus::COMPLETE)
+            $currentMonthSales = Order::whereIn('order_status', [OrderStatus::COMPLETE, '1', 1])
                 ->whereMonth('order_date', Carbon::now()->month)
                 ->whereYear('order_date', Carbon::now()->year)
                 ->sum('total');
             
-            $lastMonthSales = Order::where('order_status', OrderStatus::COMPLETE)
+            $lastMonthSales = Order::whereIn('order_status', [OrderStatus::COMPLETE, '1', 1])
                 ->whereMonth('order_date', Carbon::now()->subMonth()->month)
                 ->whereYear('order_date', Carbon::now()->subMonth()->year)
                 ->sum('total');
@@ -295,14 +295,14 @@ class ReportController extends Controller
                     DB::raw('SUM(order_details.total) as total_revenue'))
                 ->join('products', 'order_details.product_id', '=', 'products.id')
                 ->join('orders', 'order_details.order_id', '=', 'orders.id')
-                ->where('orders.order_status', OrderStatus::COMPLETE)
+                ->whereIn('orders.order_status', [OrderStatus::COMPLETE, '1', 1])
                 ->groupBy('products.id', 'products.name')
                 ->orderBy('total_quantity', 'desc')
                 ->limit(5)
                 ->get();
 
             // Sales by payment type
-            $salesByPaymentType = Order::where('order_status', OrderStatus::COMPLETE)
+            $salesByPaymentType = Order::whereIn('order_status', [OrderStatus::COMPLETE, '1', 1])
                 ->select('payment_type', DB::raw('COUNT(*) as order_count'), DB::raw('SUM(total) as total_amount'))
                 ->groupBy('payment_type')
                 ->get();

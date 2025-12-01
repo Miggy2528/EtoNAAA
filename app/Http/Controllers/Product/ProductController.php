@@ -89,7 +89,7 @@ class ProductController extends Controller
         // Get data for filters
         $categories = Category::all(['id', 'name']);
         $meatCuts = MeatCut::all(['id', 'name']);
-        $meatTypes = MeatCut::select('meat_type')->whereNotNull('meat_type')->distinct()->pluck('meat_type');
+        $meatTypes = MeatCut::select('meat_type')->whereNotNull('meat_type')->distinct()->orderBy('meat_type')->pluck('meat_type');
         $meatSubtypes = MeatCut::select('meat_subtype')
             ->whereNotNull('meat_subtype')
             ->when($request->meat_type, function($q) use ($request) { $q->where('meat_type', $request->meat_type); })
@@ -97,8 +97,9 @@ class ProductController extends Controller
         $qualities = MeatCut::select('quality')->whereNotNull('quality')->distinct()->pluck('quality');
         $qualityGrades = MeatCut::select('quality_grade')
             ->whereNotNull('quality_grade')
-            ->when($request->quality, function($q) use ($request) { $q->where('quality', $request->quality); })
-            ->distinct()->pluck('quality_grade');
+            ->distinct()
+            ->orderBy('quality_grade')
+            ->pluck('quality_grade');
         $preparations = MeatCut::select('preparation_type')->whereNotNull('preparation_type')->distinct()->pluck('preparation_type');
         $preparationStyles = MeatCut::select('preparation_style')
             ->whereNotNull('preparation_style')
@@ -122,7 +123,7 @@ class ProductController extends Controller
     {
         $categories = Category::all(['id', 'name']);
         $units = Unit::all(['id', 'name']);
-        $meatCuts = MeatCut::all(['id', 'name', 'default_price_per_kg']);
+        $meatCuts = MeatCut::all(['id', 'name', 'default_price_per_kg', 'animal_type', 'meat_type', 'quality', 'preparation_type', 'meat_subtype', 'quality_grade', 'preparation_style']);
 
         if ($request->has('category')) {
             $categories = Category::whereSlug($request->get('category'))->get();
@@ -188,16 +189,6 @@ class ProductController extends Controller
         }
     }
 
-    // Helper method to generate a unique product code
-    private function generateUniqueCode()
-    {
-        do {
-            $code = 'PC' . strtoupper(uniqid());
-        } while (Product::where('code', $code)->exists()); 
-
-        return $code;
-    }
-
     public function show(Product $product)
     {
         // Generate a barcode
@@ -223,64 +214,88 @@ class ProductController extends Controller
 
     public function update(UpdateProductRequest $request, Product $product)
     {
-        // Track what changed
-        $original = $product->getOriginal();
-        $changes = [];
-        
-        foreach ($request->except('product_image', '_token', '_method') as $key => $value) {
-            if (array_key_exists($key, $original) && $original[$key] != $value) {
-                $changes[$key] = [
-                    'old' => $original[$key],
-                    'new' => $value
-                ];
-            }
-        }
-
-        $data = $request->except(['product_image', 'selling_price']);
-        if ($request->meat_cut_id) {
-            $meatCut = MeatCut::find($request->meat_cut_id);
-            if ($meatCut) {
-                $data['price_per_kg'] = $meatCut->default_price_per_kg;
-                // Keep DB consistent if selling_price column exists
-                $data['selling_price'] = $data['price_per_kg'];
-            }
-        }
-
--        $product->update($request->except('product_image'));
-+        $product->update($data);
-        
-        // Set who updated the product
-        $product->updated_by = auth()->id();
-        $product->save();
-
-        if ($request->hasFile('product_image')) {
-
-            // Delete old image if exists
-            if ($product->product_image) {
-                \Storage::disk('public')->delete('products/' . $product->product_image);
-            }
-
-            // Prepare new image
-            $file = $request->file('product_image');
-            $fileName = hexdec(uniqid()) . '.' . $file->getClientOriginalExtension();
-
-            // Store new image to public storage
-            $file->storeAs('products/', $fileName, 'public');
-
-            // Save new image name to database
-            $product->update([
-                'product_image' => $fileName
+        try {
+            // Log the request data for debugging
+            \Log::info('Product update request received', [
+                'product_id' => $product->id,
+                'request_data' => $request->except('product_image'),
+                'has_file' => $request->hasFile('product_image'),
+                'user_id' => auth()->id()
             ]);
             
-            $changes['product_image'] = ['old' => $product->product_image, 'new' => $fileName];
+            // Track what changed
+            $original = $product->getOriginal();
+            $changes = [];
+            
+            foreach ($request->except('product_image', '_token', '_method', '_debug') as $key => $value) {
+                if (array_key_exists($key, $original) && $original[$key] != $value) {
+                    $changes[$key] = [
+                        'old' => $original[$key],
+                        'new' => $value
+                    ];
+                }
+            }
+
+            $data = $request->except(['product_image', 'selling_price', '_debug']);
+            if ($request->meat_cut_id) {
+                $meatCut = MeatCut::find($request->meat_cut_id);
+                if ($meatCut) {
+                    $data['price_per_kg'] = $meatCut->default_price_per_kg;
+                    // Keep DB consistent if selling_price column exists
+                    $data['selling_price'] = $data['price_per_kg'];
+                }
+            }
+
+            // Log the data that will be updated
+            \Log::info('Product update data prepared', $data);
+            
+            // Update the product with all data except image
+            $product->update($data);
+            
+            // Set who updated the product
+            $product->updated_by = auth()->id();
+            $product->save();
+
+            // Handle image upload separately to avoid issues with model state
+            if ($request->hasFile('product_image')) {
+                // Delete old image if exists
+                if ($product->product_image) {
+                    \Storage::disk('public')->delete('products/' . $product->product_image);
+                }
+
+                // Prepare new image
+                $file = $request->file('product_image');
+                $fileName = hexdec(uniqid()) . '.' . $file->getClientOriginalExtension();
+
+                // Store new image to public storage
+                $file->storeAs('products/', $fileName, 'public');
+
+                // Save new image name to database
+                $product->product_image = $fileName;
+                $product->save();
+                
+                $changes['product_image'] = ['old' => $product->getOriginal('product_image'), 'new' => $fileName];
+            }
+
+            // Log the product update with changes
+            $this->logProductUpdate($product, 'updated', $changes);
+
+            \Log::info('Product update successful', ['product_id' => $product->id]);
+            
+            return redirect()
+                ->route('products.index')
+                ->with('success', 'Product has been updated!');
+        } catch (\Exception $e) {
+            \Log::error('Product update error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'product_id' => $product->id ?? 'unknown',
+                'user_id' => auth()->id() ?? 'unknown'
+            ]);
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors(['error' => 'Failed to update product: ' . $e->getMessage()]);
         }
-
-        // Log the product update with changes
-        $this->logProductUpdate($product, 'updated', $changes);
-
-        return redirect()
-            ->route('products.index')
-            ->with('success', 'Product has been updated!');
     }
 
     public function destroy(Product $product)

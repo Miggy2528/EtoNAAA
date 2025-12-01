@@ -96,25 +96,23 @@
 
         <!-- Staff Performance -->
         <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100">
+            <div class="card h-100 border-0 shadow-sm">
                 <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-auto">
-                            <span class="bg-info text-white avatar">
-                                <i class="fas fa-users"></i>
-                            </span>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-info bg-opacity-10 p-3 rounded-circle me-3">
+                            <i class="fas fa-users text-info"></i>
                         </div>
-                        <div class="col">
-                            <h5 class="card-title">Staff Performance</h5>
-                            <p class="card-text">Staff productivity, performance evaluations, and team analytics.</p>
+                        <div>
+                            <h5 class="card-title mb-1">Staff Performance</h5>
+                            <p class="card-text text-muted mb-0">Staff productivity and performance analytics</p>
                         </div>
                     </div>
-                    <div class="mt-3">
-                        <a href="{{ route('staff.report') }}" class="btn btn-info">
-                            <i class="fas fa-chart-bar"></i> View Report
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                        <a href="{{ route('staff.report') }}" class="btn btn-info flex-fill">
+                            <i class="fas fa-chart-bar me-1"></i> View Report
                         </a>
-                        <a href="{{ route('staff.index') }}" class="btn btn-outline-info">
-                            <i class="fas fa-users"></i> Manage Staff
+                        <a href="{{ route('staff.index') }}" class="btn btn-outline-info flex-fill">
+                            <i class="fas fa-users me-1"></i> Manage Staff
                         </a>
                     </div>
                 </div>
@@ -122,6 +120,27 @@
         </div>
 
 
+        <!-- Market Analysis -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-purple bg-opacity-10 p-3 rounded-circle me-3">
+                            <i class="fas fa-chart-bar text-purple"></i>
+                        </div>
+                        <div>
+                            <h5 class="card-title mb-1">Market Analysis</h5>
+                            <p class="card-text text-muted mb-0">Profitable meat types, popular preparations, and customer insights</p>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('reports.market.analysis') }}" class="btn btn-purple">
+                            <i class="fas fa-chart-bar me-1"></i> View Analysis
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 @endsection

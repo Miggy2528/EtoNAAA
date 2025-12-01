@@ -10,6 +10,7 @@
         "awobaz/compoships": "^2.2",
         "barryvdh/laravel-dompdf": "^3.1",
         "doctrine/dbal": "^3.10",
+        "dompdf/dompdf": "^3.1",
         "guzzlehttp/guzzle": "^7.2",
         "haruncpi/laravel-id-generator": "^1.1",
         "kyslik/column-sortable": "^6.5",

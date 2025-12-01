@@ -10,6 +10,9 @@
     <!-- Local CSS files -->
     <link href="{{ asset('assets/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('assets/css/all.min.css') }}" rel="stylesheet">
+    
+    <!-- Compiled CSS -->
+    @vite(['resources/css/app.css'])
 
     <style>
         :root {
@@ -93,6 +96,133 @@
             border-top: 1px solid rgba(0,0,0,0.05);
             margin-top: auto;
         }
+        
+        /* Purple theme for Market Analysis */
+        .bg-purple {
+            background-color: #6f42c1 !important;
+        }
+        
+        .text-purple {
+            color: #6f42c1 !important;
+        }
+        
+        .btn-purple {
+            background-color: #6f42c1;
+            border-color: #6f42c1;
+            color: white;
+        }
+        
+        .btn-purple:hover {
+            background-color: #5a32a3;
+            border-color: #5a32a3;
+            color: white;
+        }
+        
+        .bg-purple-lt {
+            background-color: rgba(111, 66, 193, 0.1) !important;
+        }
+        
+        /* Card link hover effect */
+        .card-link {
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .card-link:hover .card {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        /* Avatar colors */
+        .avatar.bg-blue-lt {
+            background-color: rgba(33, 118, 210, 0.1) !important;
+        }
+        
+        .avatar.bg-orange-lt {
+            background-color: rgba(247, 103, 7, 0.1) !important;
+        }
+        
+        .avatar.bg-green-lt {
+            background-color: rgba(47, 179, 68, 0.1) !important;
+        }
+        
+        .avatar.bg-purple-lt {
+            background-color: rgba(112, 58, 192, 0.1) !important;
+        }
+        
+        .avatar.bg-azure-lt {
+            background-color: rgba(65, 159, 255, 0.1) !important;
+        }
+        
+        /* Supplier Dashboard Specific Styles */
+        .supplier-stat-card {
+            border-left: 4px solid #8B0000;
+            transition: all 0.3s ease;
+        }
+
+        .supplier-stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .supplier-stat-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 1.25rem;
+        }
+
+        .revenue-chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .quick-action-card {
+            transition: all 0.2s ease;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+        }
+
+        .quick-action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border-color: #cbd5e1;
+        }
+
+        .quick-action-icon {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 1.5rem;
+        }
+
+        .recent-order-item:not(:last-child) {
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .delivery-rating-progress {
+            height: 8px;
+            border-radius: 4px;
+        }
+
+        /* Responsive Improvements */
+        @media (max-width: 768px) {
+            .supplier-stat-card {
+                margin-bottom: 1rem;
+            }
+            
+            .quick-action-card {
+                margin-bottom: 1rem;
+            }
+        }
     </style>
 
     @stack('page-styles')
@@ -111,9 +241,15 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link" wire:navigate href="{{ route('dashboard') }}">
-                            <i class="fas fa-chart-line me-1"></i> Dashboard
-                        </a>
+                        @if(Auth::user()->isSupplier())
+                            <a class="nav-link" wire:navigate href="{{ route('supplier.dashboard') }}">
+                                <i class="fas fa-chart-line me-1"></i> Dashboard
+                            </a>
+                        @else
+                            <a class="nav-link" wire:navigate href="{{ route('dashboard') }}">
+                                <i class="fas fa-chart-line me-1"></i> Dashboard
+                            </a>
+                        @endif
                     </li>
                     @if(!Auth::user()->isSupplier())
                     <li class="nav-item">
@@ -126,6 +262,11 @@
                     <li class="nav-item">
                         <a class="nav-link" wire:navigate href="{{ route('supplier.purchases.index') }}">
                             <i class="fas fa-shopping-cart me-1"></i> Orders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" wire:navigate href="{{ route('supplier.deliveries.index') }}">
+                            <i class="fas fa-truck me-1"></i> Deliveries
                         </a>
                     </li>
                     @else
@@ -211,12 +352,14 @@
     <div class="container-fluid flex-grow-1">
         <div class="row">
             <main class="col py-4">
-                @if(isset($showBackButton) && $showBackButton)
-                    <div class="mb-3">
-                        <x-back-button />
-                    </div>
-                @endif
-                @yield('content')
+                <div class="container-fluid">
+                    @if(isset($showBackButton) && $showBackButton)
+                        <div class="mb-3">
+                            <x-back-button />
+                        </div>
+                    @endif
+                    @yield('content')
+                </div>
             </main>
         </div>
     </div>

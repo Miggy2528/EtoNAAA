@@ -162,15 +162,92 @@ class OrderController extends Controller
         }
     }
 
-    public function downloadInvoice($order)
+    public function downloadInvoice($orderId)
     {
-        $order = Order::with(['customer', 'details'])
-            ->where('id', $order)
-            ->first();
+        $order = Order::with(['customer', 'details.product.unit'])
+            ->findOrFail($orderId);
 
         return view('orders.print-invoice', [
             'order' => $order,
         ]);
+    }
+
+    /**
+     * Show the invoice edit form
+     */
+    public function editInvoice($orderId)
+    {
+        $order = Order::with(['customer', 'details.product.unit'])
+            ->findOrFail($orderId);
+
+        return view('orders.edit-invoice', compact('order'));
+    }
+
+    /**
+     * Preview the invoice with potential edits
+     */
+    public function previewInvoice(Request $request, $orderId)
+    {
+        $order = Order::with(['customer', 'details.product.unit'])
+            ->findOrFail($orderId);
+
+        // Handle different actions
+        if ($request->input('action') === 'save') {
+            // Save the changes to the database
+            $editedData = $request->input('edited_data', []);
+            
+            // Update order details with edited data
+            $order->update([
+                'customer_name' => $editedData['customer_name'] ?? $order->customer_name,
+                'customer_email' => $editedData['customer_email'] ?? $order->customer_email,
+                'contact_phone' => $editedData['customer_phone'] ?? $order->contact_phone,
+                'receiver_name' => $editedData['receiver_name'] ?? $order->receiver_name,
+                'delivery_address' => $editedData['delivery_address'] ?? $order->delivery_address,
+                'created_at' => isset($editedData['invoice_date']) ? 
+                    \Carbon\Carbon::createFromFormat('Y-m-d', $editedData['invoice_date']) : 
+                    $order->created_at,
+            ]);
+
+            // Update order items if edited
+            if (isset($editedData['items'])) {
+                foreach ($editedData['items'] as $index => $itemData) {
+                    if (isset($order->details[$index])) {
+                        $order->details[$index]->update([
+                            'unitcost' => $itemData['unit_price'] ?? $order->details[$index]->unitcost,
+                            'quantity' => $itemData['quantity'] ?? $order->details[$index]->quantity,
+                            'total' => ($itemData['unit_price'] ?? $order->details[$index]->unitcost) * 
+                                      ($itemData['quantity'] ?? $order->details[$index]->quantity),
+                        ]);
+                    }
+                }
+                
+                // Recalculate order total
+                $newTotal = $order->details->sum('total');
+                $order->update(['total' => $newTotal]);
+            }
+
+            return redirect()->route('orders.show', $order->id)
+                ->with('success', 'Invoice changes saved successfully.');
+        }
+
+        // If there are edits, update the order temporarily for preview
+        if ($request->has('edited_data')) {
+            $editedData = $request->input('edited_data');
+            
+            // We'll pass the edited data to the view for preview
+            // In a real implementation, you might want to validate this data
+            $previewData = [
+                'order' => $order,
+                'editedData' => $editedData
+            ];
+        } else {
+            $previewData = [
+                'order' => $order,
+                'editedData' => null
+            ];
+        }
+
+        return view('orders.preview-invoice', $previewData);
     }
 
     /**

@@ -172,7 +172,7 @@ class OptimizedReportController extends Controller
                 $topProductByRevenue = DB::table('order_details')
                     ->join('products', 'order_details.product_id', '=', 'products.id')
                     ->join('orders', 'order_details.order_id', '=', 'orders.id')
-                    ->where('orders.order_status', OrderStatus::COMPLETE->value)
+                    ->whereIn('orders.order_status', [OrderStatus::COMPLETE->value, '1', 1])
                     ->select('products.id', 'products.name', DB::raw('SUM(order_details.total) as total_revenue'))
                     ->groupBy('products.id', 'products.name')
                     ->orderBy('total_revenue', 'desc')
@@ -187,7 +187,7 @@ class OptimizedReportController extends Controller
                     $dateStr = $date->format('Y-m-d');
                     
                     $dailyData = DB::table('orders')
-                        ->where('order_status', OrderStatus::COMPLETE->value)
+                        ->whereIn('order_status', [OrderStatus::COMPLETE->value, '1', 1])
                         ->whereDate('order_date', $dateStr)
                         ->selectRaw('SUM(total) as sales, COUNT(*) as orders')
                         ->first();
@@ -206,7 +206,7 @@ class OptimizedReportController extends Controller
 
                 // Monthly comparison with single query
                 $monthlyData = DB::table('orders')
-                    ->where('order_status', OrderStatus::COMPLETE->value)
+                    ->whereIn('order_status', [OrderStatus::COMPLETE->value, '1', 1])
                     ->selectRaw('
                         SUM(CASE WHEN MONTH(order_date) = ? AND YEAR(order_date) = ? THEN total ELSE 0 END) as current_month_sales,
                         SUM(CASE WHEN MONTH(order_date) = ? AND YEAR(order_date) = ? THEN total ELSE 0 END) as last_month_sales
@@ -226,7 +226,7 @@ class OptimizedReportController extends Controller
                 $topProducts = DB::table('order_details')
                     ->join('products', 'order_details.product_id', '=', 'products.id')
                     ->join('orders', 'order_details.order_id', '=', 'orders.id')
-                    ->where('orders.order_status', OrderStatus::COMPLETE->value)
+                    ->whereIn('orders.order_status', [OrderStatus::COMPLETE->value, '1', 1])
                     ->select('products.id', 'products.name', 
                              DB::raw('SUM(order_details.quantity) as total_quantity'),
                              DB::raw('SUM(order_details.total) as total_revenue'))
@@ -237,7 +237,7 @@ class OptimizedReportController extends Controller
 
                 // Sales by payment type with single query
                 $salesByPaymentType = DB::table('orders')
-                    ->where('order_status', OrderStatus::COMPLETE->value)
+                    ->whereIn('order_status', [OrderStatus::COMPLETE->value, '1', 1])
                     ->select('payment_type', 
                              DB::raw('COUNT(*) as order_count'),
                              DB::raw('SUM(total) as total_amount'))

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
+
 class InventoryReportController extends Controller
 {
     /**
@@ -140,39 +141,44 @@ class InventoryReportController extends Controller
         $currentYear = now()->year;
 
         $topSellingDaily = \App\Models\OrderDetails::whereHas('order', function($q) use ($today) {
-                $q->where('order_status', \App\Enums\OrderStatus::COMPLETE)
+                $q->whereIn('order_status', [\App\Enums\OrderStatus::COMPLETE, '1', 1])
                   ->whereDate('order_date', $today);
             })
             ->select('product_id')
             ->selectRaw('SUM(quantity) as total_qty, SUM(total) as revenue')
             ->groupBy('product_id')
             ->orderByDesc('total_qty')
-            ->with('product')
+            ->with('product.category')
             ->limit(5)
             ->get();
 
         $topSellingMonthly = \App\Models\OrderDetails::whereHas('order', function($q) use ($currentMonth, $currentYear) {
-                $q->where('order_status', \App\Enums\OrderStatus::COMPLETE)
-                  ->whereYear('order_date', $currentYear)
-                  ->whereMonth('order_date', $currentMonth);
+                $q->whereIn('order_status', [\App\Enums\OrderStatus::COMPLETE, '1', 1])
+                  ->whereBetween('order_date', [
+                      Carbon::create($currentYear, $currentMonth, 1)->startOfMonth(),
+                      Carbon::create($currentYear, $currentMonth, 1)->endOfMonth()
+                  ]);
             })
             ->select('product_id')
             ->selectRaw('SUM(quantity) as total_qty, SUM(total) as revenue')
             ->groupBy('product_id')
             ->orderByDesc('total_qty')
-            ->with('product')
+            ->with('product.category')
             ->limit(5)
             ->get();
 
         $topSellingYearly = \App\Models\OrderDetails::whereHas('order', function($q) use ($currentYear) {
-                $q->where('order_status', \App\Enums\OrderStatus::COMPLETE)
-                  ->whereYear('order_date', $currentYear);
+                $q->whereIn('order_status', [\App\Enums\OrderStatus::COMPLETE, '1', 1])
+                  ->whereBetween('order_date', [
+                      Carbon::create($currentYear, 1, 1)->startOfYear(),
+                      Carbon::create($currentYear, 12, 31)->endOfYear()
+                  ]);
             })
             ->select('product_id')
             ->selectRaw('SUM(quantity) as total_qty, SUM(total) as revenue')
             ->groupBy('product_id')
             ->orderByDesc('total_qty')
-            ->with('product')
+            ->with('product.category')
             ->limit(5)
             ->get();
 

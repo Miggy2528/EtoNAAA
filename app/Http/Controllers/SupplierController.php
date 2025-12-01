@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Supplier;
 use App\Models\Product;
+use App\Models\Purchase;
+use App\Models\PurchaseDetails;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +13,7 @@ use Illuminate\Support\Str;
 use App\Http\Requests\Supplier\StoreSupplierRequest;
 use App\Http\Requests\Supplier\UpdateSupplierRequest;
 use App\Enums\SupplierType;
+use App\Enums\PurchaseStatus;
 use Illuminate\Validation\Rule;
 
 class SupplierController extends Controller
@@ -67,7 +70,10 @@ class SupplierController extends Controller
         // Load relationships to avoid N+1 queries
         $supplier->load(['purchases', 'products']);
         
-        $products = $supplier->products;
+        // Load products with their purchases relationship for status display
+        $products = $supplier->products()->with(['category', 'purchases' => function($query) use ($supplier) {
+            $query->where('supplier_id', $supplier->id)->latest();
+        }])->get();
         
         // Get procurement statistics
         $procurementStats = DB::table('procurements')
@@ -90,6 +96,81 @@ class SupplierController extends Controller
             ->get();
             
         return view('suppliers.show', compact('supplier', 'products', 'procurementStats', 'recentProcurements'));
+    }
+
+    public function purchaseOrder(Supplier $supplier)
+    {
+        // Get products assigned to this supplier with category and unit relationships
+        $products = $supplier->products()->with(['category', 'unit'])->get();
+        
+        return view('suppliers.purchase-order', compact('supplier', 'products'));
+    }
+
+    public function storePurchaseOrder(Request $request, Supplier $supplier)
+    {
+        // Validate the request
+        $validated = $request->validate([
+            'products' => 'required|array',
+            'products.*.id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
+            'notes' => 'nullable|string|max:1000'
+        ]);
+
+        try {
+            // Start database transaction
+            DB::beginTransaction();
+
+            // Create the purchase order
+            $purchase = Purchase::create([
+                'supplier_id' => $supplier->id,
+                'date' => now(),
+                'purchase_no' => 'PO-' . date('Ymd') . '-' . strtoupper(Str::random(4)),
+                'status' => PurchaseStatus::PENDING, // Use the enum value
+                'total_amount' => 0, // Will be updated after calculating
+                'created_by' => auth()->id(),
+                'notes' => $validated['notes'] ?? null
+            ]);
+
+            // Calculate total amount and create purchase details
+            $totalAmount = 0;
+            foreach ($validated['products'] as $productData) {
+                $product = Product::find($productData['id']);
+                $quantity = $productData['quantity'];
+                $unitCost = $product->buying_price ?? 0;
+                $total = $quantity * $unitCost;
+                
+                PurchaseDetails::create([
+                    'purchase_id' => $purchase->id,
+                    'product_id' => $product->id,
+                    'quantity' => $quantity,
+                    'unitcost' => $unitCost,
+                    'total' => $total
+                ]);
+                
+                $totalAmount += $total;
+            }
+
+            // Update the total amount in the purchase
+            $purchase->update(['total_amount' => $totalAmount]);
+
+            // Commit the transaction
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Purchase order created successfully!',
+                'purchase_id' => $purchase->id,
+                'purchase_no' => $purchase->purchase_no
+            ]);
+        } catch (\Exception $e) {
+            // Rollback the transaction
+            DB::rollback();
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create purchase order. Please try again.'
+            ], 500);
+        }
     }
 
     public function edit(Supplier $supplier)
@@ -138,7 +219,15 @@ class SupplierController extends Controller
             'product_ids.*' => 'exists:products,id'
         ]);
 
-        $supplier->products()->sync($validated['product_ids']);
+        // Update the supplier_id for each selected product
+        Product::whereIn('id', $validated['product_ids'])
+               ->update(['supplier_id' => $supplier->id]);
+        
+        // For products that were previously assigned to this supplier but are no longer selected,
+        // we need to remove the association
+        Product::where('supplier_id', $supplier->id)
+               ->whereNotIn('id', $validated['product_ids'])
+               ->update(['supplier_id' => null]);
 
         return redirect()->route('suppliers.show', $supplier)
             ->with('success', 'Products assigned successfully.');

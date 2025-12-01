@@ -160,6 +160,9 @@ Route::middleware(['auth:web', 'role:supplier'])->prefix('supplier')->name('supp
     // Supplier Purchases - Enhanced with communication
     Route::get('/purchases', [App\Http\Controllers\Supplier\PurchaseController::class, 'index'])->name('purchases.index');
     Route::get('/purchases/{id}', [App\Http\Controllers\Supplier\PurchaseController::class, 'show'])->name('purchases.show');
+    Route::get('/purchases/{id}/download-invoice', [App\Http\Controllers\Supplier\PurchaseController::class, 'downloadInvoice'])->name('purchases.download-invoice');
+    Route::get('/purchases/{id}/edit-invoice', [App\Http\Controllers\Supplier\PurchaseController::class, 'editInvoice'])->name('purchases.edit-invoice');
+    Route::post('/purchases/{id}/preview-invoice', [App\Http\Controllers\Supplier\PurchaseController::class, 'previewInvoice'])->name('purchases.preview-invoice');
     Route::post('/purchases/{id}/notes', [App\Http\Controllers\Supplier\PurchaseController::class, 'updateNotes'])->name('purchases.update-notes');
     Route::post('/purchases/{id}/delivery-status', [App\Http\Controllers\Supplier\PurchaseController::class, 'updateDeliveryStatus'])->name('purchases.update-delivery-status');
     
@@ -243,6 +246,10 @@ Route::middleware(['auth:web'])->group(function () {
         Route::resource('/suppliers', SupplierController::class);
         Route::post('/suppliers/{supplier}/assign-products', [SupplierController::class, 'assignProducts'])
          ->name('suppliers.assign-products');
+        Route::get('/suppliers/{supplier}/purchase-order', [SupplierController::class, 'purchaseOrder'])
+         ->name('suppliers.purchase-order');
+        Route::post('/suppliers/{supplier}/purchase-order', [SupplierController::class, 'storePurchaseOrder'])
+         ->name('suppliers.purchase-order.store');
         
     });
 
@@ -276,7 +283,9 @@ Route::post('/admin/orders/{order}/status', [OrderController::class, 'updateOrde
     Route::put('/due/order/update/{order}', [DueOrderController::class, 'update'])->name('due.update');
 
     // TODO: Remove from OrderController
-    Route::get('/orders/details/{order_id}/download', [OrderController::class, 'downloadInvoice'])->name('order.downloadInvoice');
+    Route::get('/orders/details/{orderId}/download', [OrderController::class, 'downloadInvoice'])->name('order.downloadInvoice');
+    Route::get('/orders/{order_id}/edit-invoice', [OrderController::class, 'editInvoice'])->name('orders.edit-invoice');
+    Route::post('/orders/{order_id}/preview-invoice', [OrderController::class, 'previewInvoice'])->name('orders.preview-invoice');
 
     // Route Purchases
     Route::get('/purchases/approved', [PurchaseController::class, 'approvedPurchases'])->name('purchases.approvedPurchases');
@@ -293,6 +302,7 @@ Route::post('/admin/orders/{order}/status', [OrderController::class, 'updateOrde
     Route::put('/purchases/{purchase}/edit', [PurchaseController::class, 'update'])->name('purchases.update');
     Route::delete('/purchases/{purchase}', [PurchaseController::class, 'destroy'])->name('purchases.delete');
     Route::post('/purchases/{purchase}/mark-received', [PurchaseController::class, 'markAsReceived'])->name('purchases.mark-received');
+    Route::get('/purchases/{purchase}/download-invoice', [PurchaseController::class, 'downloadInvoice'])->name('purchases.download-invoice');
 
     // Supplier Management Routes
     Route::resource('suppliers', SupplierController::class);
@@ -355,6 +365,11 @@ Route::post('/admin/orders/{order}/status', [OrderController::class, 'updateOrde
         Route::resource('staff', \App\Http\Controllers\StaffController::class);
         Route::resource('staff-performance', \App\Http\Controllers\StaffPerformanceController::class);
         Route::get('reports/staff-performance', [\App\Http\Controllers\StaffPerformanceController::class, 'report'])->name('staff.report');
+        
+        // Market Analysis Routes (Admin Only)
+        Route::get('reports/market-analysis', [\App\Http\Controllers\MarketAnalysisController::class, 'index'])->name('reports.market.analysis');
+        Route::get('reports/market-analysis/export', [\App\Http\Controllers\MarketAnalysisController::class, 'exportData'])->name('reports.market.analysis.export');
+        Route::get('reports/market-analysis/debug', [\App\Http\Controllers\MarketAnalysisController::class, 'debugTrends'])->name('reports.market.analysis.debug');
     });
 
     // Staff Inventory Management Routes

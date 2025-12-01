@@ -20,7 +20,7 @@ class DashboardController extends Controller
         $dashboardData = Cache::remember('dashboard_data', 600, function() {
             // Orders statistics with optimized queries
             $orders = Order::count();
-            $completedOrders = Order::where('order_status', OrderStatus::COMPLETE)->count();
+            $completedOrders = Order::whereIn('order_status', [OrderStatus::COMPLETE, '1', 1])->count();
             $todayOrders = Order::whereDate('created_at', today())->count();
             $pendingOrders = Order::where('order_status', OrderStatus::PENDING)->count();
 

@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             StaffNotificationSeeder::class, // Add Staff Notification System
             SupplierUserSeeder::class, // Add Supplier User Seeder
             SupplierDummyDataSeeder::class, // Add Supplier Dummy Data
+            MarketAnalysisTrendSeeder::class, // Add Market Analysis Trend Data
         ]);
 
         $orders = Order::factory(50)->create();

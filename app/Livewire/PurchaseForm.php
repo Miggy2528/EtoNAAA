@@ -10,10 +10,9 @@ use Livewire\Component;
 
 class PurchaseForm extends Component
 {
-
     public array $invoiceProducts = [];
 
-    #[Validate('required', message: 'Please select products')]
+    #[Validate('required', message: 'Please select at least one product')]
     public Collection $allProducts;
 
     public function mount(): void
@@ -39,10 +38,10 @@ class PurchaseForm extends Component
 
     public function addProduct(): void
     {
+        // Validate that all existing products are saved before adding a new one
         foreach ($this->invoiceProducts as $key => $invoiceProduct) {
             if (! $invoiceProduct['is_saved']) {
-                $this->addError('invoiceProducts.'.$key, 'This line must be saved before creating a new one.');
-
+                $this->addError('invoiceProducts.'.$key, 'Please save this product before adding another.');
                 return;
             }
         }
@@ -58,10 +57,10 @@ class PurchaseForm extends Component
 
     public function editProduct($index): void
     {
+        // Validate that all existing products are saved before editing
         foreach ($this->invoiceProducts as $key => $invoiceProduct) {
             if (! $invoiceProduct['is_saved']) {
-                $this->addError('invoiceProducts.'.$key, 'This line must be saved before editing another.');
-
+                $this->addError('invoiceProducts.'.$key, 'Please save this product before editing another.');
                 return;
             }
         }
@@ -73,17 +72,34 @@ class PurchaseForm extends Component
     {
         $this->resetErrorBag();
 
+        // Validate product selection
+        if (empty($this->invoiceProducts[$index]['product_id'])) {
+            $this->addError('invoiceProducts.'.$index.'.product_id', 'Please select a product.');
+            return;
+        }
+
+        // Validate quantity
+        if (empty($this->invoiceProducts[$index]['quantity']) || $this->invoiceProducts[$index]['quantity'] <= 0) {
+            $this->addError('invoiceProducts.'.$index.'.quantity', 'Quantity must be at least 1.');
+            return;
+        }
+
         $product = $this->allProducts->find($this->invoiceProducts[$index]['product_id']);
 
+        if (!$product) {
+            $this->addError('invoiceProducts.'.$index.'.product_id', 'Selected product not found.');
+            return;
+        }
+
         $this->invoiceProducts[$index]['product_name'] = $product->name;
-        $this->invoiceProducts[$index]['product_price'] = $product->buying_price;
+        $this->invoiceProducts[$index]['product_price'] = $product->buying_price ?? 0;
         $this->invoiceProducts[$index]['is_saved'] = true;
     }
 
     public function removeProduct($index): void
     {
         unset($this->invoiceProducts[$index]);
-
         $this->invoiceProducts = array_values($this->invoiceProducts);
+        $this->resetErrorBag();
     }
 }

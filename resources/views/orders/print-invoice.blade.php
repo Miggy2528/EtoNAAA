@@ -315,7 +315,7 @@
                                         <div class="info-block">
                                             <h5 class="info-label">Bill To:</h5>
                                             <p class="info-value"><strong>{{ $order->customer_name ?? $order->customer->name }}</strong></p>
-                                            @if($order->receiver_name && $order->receiver_name !== $order->customer_name)
+                                            @if(($order->receiver_name ?? '') !== '' && ($order->receiver_name ?? '') !== ($order->customer_name ?? $order->customer->name))
                                             <p class="info-value"><strong>Receiver: {{ $order->receiver_name }}</strong></p>
                                             @endif
                                             <p class="info-value">{{ $order->contact_phone }}</p>

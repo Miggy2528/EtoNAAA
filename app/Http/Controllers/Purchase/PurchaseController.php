@@ -260,4 +260,34 @@ class PurchaseController extends Controller
             return $e;
         }
     }
+
+    /**
+     * Download purchase order invoice as PDF
+     */
+    public function downloadInvoice(Purchase $purchase)
+    {
+        // Load the purchase with all necessary relationships
+        $purchase->load(['supplier', 'details.product.unit', 'createdBy', 'updatedBy']);
+
+        // Generate PDF using DOMPDF
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('purchases.invoice', compact('purchase'));
+        
+        // Set paper size and orientation
+        $pdf->setPaper('A4', 'portrait');
+        
+        // Set options for better rendering
+        $pdf->setOptions([
+            'enable-php' => true,
+            'enable-font-subsetting' => true,
+            'encoding' => 'UTF-8',
+            'defaultFont' => 'Arial',
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false,
+            'timeout' => 300, // 5 minutes timeout
+            'chroot' => public_path(),
+        ]);
+        
+        // Download the PDF file
+        return $pdf->download('purchase-order-invoice-' . $purchase->purchase_no . '.pdf');
+    }
 }

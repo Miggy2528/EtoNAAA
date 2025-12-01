@@ -25,35 +25,37 @@ class UpdateProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_image'     => 'image|file|max:2048',
-            'name'              => 'required|string',
-            // allow duplicate names/slugs for separate product entries
+            'product_image'     => 'nullable|image|file|max:2048',
+            'name'              => 'sometimes|string',
             'slug'              => 'nullable|string',
-            'category_id'       => 'required|integer',
-            'unit_id'           => 'required|integer',
-            'meat_cut_id'       => 'required|integer|exists:meat_cuts,id',
-            'quantity'          => 'required|integer',
-            'price_per_kg'      => 'required|numeric|min:0',
-            'buying_price'      => 'required|numeric|min:0',
-            'quantity_alert'    => 'required|integer',
-            'expiration_date'   => 'required|date|after:today',
-            'source'            => 'required|string',
+            'category_id'       => 'sometimes|integer|exists:categories,id',
+            'unit_id'           => 'sometimes|integer|exists:units,id',
+            'meat_cut_id'       => 'sometimes|integer|exists:meat_cuts,id',
+            'quantity'          => 'sometimes|integer|min:0',
+            'price_per_kg'      => 'sometimes|numeric|min:0',
+            'buying_price'      => 'sometimes|numeric|min:0',
+            'quantity_alert'    => 'sometimes|integer|min:0',
+            'expiration_date'   => 'nullable|date',
+            'source'            => 'nullable|string',
             'notes'             => 'nullable|max:1000'
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        $baseSlug = Str::slug($this->name, '-');
-        $slug = $baseSlug;
-        $suffix = 2;
-        $currentId = optional($this->product)->id;
-        while (\App\Models\Product::where('slug', $slug)->when($currentId, function($q) use ($currentId) { $q->where('id', '!=', $currentId); })->exists()) {
-            $slug = $baseSlug.'-'.$suffix;
-            $suffix++;
+        // Only generate slug if name is provided
+        if ($this->filled('name')) {
+            $baseSlug = Str::slug($this->name, '-');
+            $slug = $baseSlug;
+            $suffix = 2;
+            $currentId = optional($this->product)->id;
+            while (\App\Models\Product::where('slug', $slug)->when($currentId, function($q) use ($currentId) { $q->where('id', '!=', $currentId); })->exists()) {
+                $slug = $baseSlug.'-'.$suffix;
+                $suffix++;
+            }
+            $this->merge([
+                'slug' => $slug,
+            ]);
         }
-        $this->merge([
-            'slug' => $slug,
-        ]);
     }
 }

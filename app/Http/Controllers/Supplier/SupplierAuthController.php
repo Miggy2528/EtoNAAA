@@ -79,6 +79,7 @@ class SupplierAuthController extends Controller
             'terms-of-service' => ['required']
         ]);
 
+        // Create user account
         $user = User::create([
             'name' => $request->name,
             'username' => $request->username,
@@ -86,6 +87,22 @@ class SupplierAuthController extends Controller
             'password' => Hash::make($request->password),
             'role' => 'supplier',
             'status' => 'active',
+        ]);
+
+        // Create supplier record linked to user
+        \App\Models\Supplier::create([
+            'user_id' => $user->id,
+            'name' => $request->name,
+            'email' => $request->email,
+            'contact_person' => $request->name,
+            'phone' => '', // Can be updated later in profile
+            'address' => '', // Can be updated later in profile
+            'shopname' => $request->name . '\'s Shop',
+            'type' => 'wholesaler', // Default type
+            'status' => 'active',
+            'account_holder' => $request->name,
+            'account_number' => '',
+            'bank_name' => '',
         ]);
 
         event(new Registered($user));

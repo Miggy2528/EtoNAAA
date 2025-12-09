@@ -98,11 +98,29 @@
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-header bg-white py-3">
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                         <h5 class="mb-0">Supplier Directory</h5>
-                        <div class="d-flex align-items-center">
-                            <div class="input-group input-group-sm w-100" style="max-width: 300px;">
-                                <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                        <div class="d-flex align-items-center gap-2">
+                            <!-- Supplier Account Dropdown Filter -->
+                            <div class="input-group input-group-sm" style="max-width: 250px;">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-filter text-muted"></i>
+                                </span>
+                                <select class="form-select border-start-0" id="supplierFilter" style="cursor: pointer;">
+                                    <option value="">All Supplier Accounts</option>
+                                    @foreach($suppliers as $supplier)
+                                        <option value="{{ $supplier->id }}" data-name="{{ strtolower($supplier->name) }}" data-email="{{ strtolower($supplier->email) }}" data-shopname="{{ strtolower($supplier->shopname) }}">
+                                            {{ $supplier->name }}@if($supplier->shopname) - {{ $supplier->shopname }}@endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            
+                            <!-- Search Box -->
+                            <div class="input-group input-group-sm" style="max-width: 300px;">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-search text-muted"></i>
+                                </span>
                                 <input type="text" class="form-control border-start-0" placeholder="Search suppliers..." id="supplierSearch">
                             </div>
                         </div>
@@ -130,7 +148,7 @@
                                     $onTimeDeliveries = $procurement->on_time_deliveries ?? 0;
                                     $onTimeRate = $totalDeliveries > 0 ? round(($onTimeDeliveries / $totalDeliveries) * 100, 1) : 0;
                                 @endphp
-                                <tr class="supplier-row">
+                                <tr class="supplier-row" data-supplier-id="{{ $supplier->id }}">
                                     <td>
                                         <div class="d-flex align-items-center">
                                             @if($supplier->photo)
@@ -255,15 +273,22 @@
 
 @push('page-scripts')
 <script>
-document.getElementById('supplierSearch').addEventListener('keyup', function() {
-    const searchTerm = this.value.toLowerCase().trim();
+// Combined filter function for both dropdown and search
+function filterSuppliers() {
+    const searchTerm = document.getElementById('supplierSearch').value.toLowerCase().trim();
+    const selectedSupplierId = document.getElementById('supplierFilter').value;
     const rows = document.querySelectorAll('.supplier-row');
     let visibleCount = 0;
     
-    // Show/hide rows based on search term
+    // Show/hide rows based on both search term and dropdown selection
     rows.forEach(row => {
         const text = row.textContent.toLowerCase();
-        if (searchTerm === '' || text.includes(searchTerm)) {
+        const rowSupplierId = row.getAttribute('data-supplier-id');
+        
+        let matchesSearch = searchTerm === '' || text.includes(searchTerm);
+        let matchesDropdown = selectedSupplierId === '' || rowSupplierId === selectedSupplierId;
+        
+        if (matchesSearch && matchesDropdown) {
             row.style.display = '';
             visibleCount++;
         } else {
@@ -274,7 +299,7 @@ document.getElementById('supplierSearch').addEventListener('keyup', function() {
     // Show/hide no results message
     const noResultsRow = document.getElementById('noResultsRow');
     if (noResultsRow) {
-        if (visibleCount === 0 && searchTerm !== '') {
+        if (visibleCount === 0) {
             noResultsRow.style.display = '';
         } else {
             noResultsRow.style.display = 'none';
@@ -285,7 +310,13 @@ document.getElementById('supplierSearch').addEventListener('keyup', function() {
     document.getElementById('showingCount').textContent = visibleCount > 0 ? '1' : '0';
     document.getElementById('toCount').textContent = visibleCount;
     document.getElementById('totalCount').textContent = visibleCount;
-});
+}
+
+// Event listener for search input
+document.getElementById('supplierSearch').addEventListener('keyup', filterSuppliers);
+
+// Event listener for dropdown filter
+document.getElementById('supplierFilter').addEventListener('change', filterSuppliers);
 
 // Focus the search input on page load
 document.addEventListener('DOMContentLoaded', function() {

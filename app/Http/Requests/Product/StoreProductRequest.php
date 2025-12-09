@@ -34,7 +34,7 @@ class StoreProductRequest extends FormRequest
             'unit_id'           => 'required|integer',
             'meat_cut_id'       => 'required|integer|exists:meat_cuts,id',
             'quantity'          => 'required|integer|min:0',
-            'price_per_kg'      => 'required|numeric|min:0',
+            'price_per_kg'      => 'required|numeric|min:0|gt:buying_price',
             'expiration_date'   => 'required|date|after:today',
             'source'            => 'required|string',
             'notes'             => 'nullable|string|max:1000',
@@ -166,6 +166,7 @@ class StoreProductRequest extends FormRequest
         return [
             'expiration_date.after' => 'The expiration date must be a future date.',
             'price_per_kg.min' => 'The price per kilogram must be greater than 0.',
+            'price_per_kg.gt' => 'The selling price must be greater than the cost (buying price).',
         ];
     }
 }

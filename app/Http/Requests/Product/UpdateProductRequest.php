@@ -32,7 +32,7 @@ class UpdateProductRequest extends FormRequest
             'unit_id'           => 'sometimes|integer|exists:units,id',
             'meat_cut_id'       => 'sometimes|integer|exists:meat_cuts,id',
             'quantity'          => 'sometimes|integer|min:0',
-            'price_per_kg'      => 'sometimes|numeric|min:0',
+            'price_per_kg'      => 'sometimes|numeric|min:0|gt:buying_price',
             'buying_price'      => 'sometimes|numeric|min:0',
             'quantity_alert'    => 'sometimes|integer|min:0',
             'expiration_date'   => 'nullable|date',
@@ -57,5 +57,12 @@ class UpdateProductRequest extends FormRequest
                 'slug' => $slug,
             ]);
         }
+    }
+
+    public function messages(): array
+    {
+        return [
+            'price_per_kg.gt' => 'The selling price must be greater than the cost (buying price).',
+        ];
     }
 }

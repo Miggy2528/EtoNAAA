@@ -102,13 +102,7 @@ class OrderController extends Controller
 
     public function update(Order $order, Request $request)
     {
-        $products = OrderDetails::where('order_id', $order->id)->get();
-
-        foreach ($products as $product) {
-            Product::where('id', $product->product_id)
-                ->update(['quantity' => DB::raw('quantity - ' . $product->quantity)]);
-        }
-
+        // Update order status to complete (stock will be reduced automatically via model event)
         $order->update([
             'order_status' => OrderStatus::COMPLETE,
         ]);

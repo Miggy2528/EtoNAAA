@@ -144,7 +144,7 @@ class CheckoutController extends Controller
                 'proof_of_payment' => $proofOfPaymentPath,
             ]);
     
-            // Save order details and update inventory
+            // Save order details (stock will be reduced when order is completed)
             foreach ($cartItems as $item) {
                 OrderDetails::create([
                     'order_id' => $order->id,
@@ -152,16 +152,6 @@ class CheckoutController extends Controller
                     'quantity' => $item->qty,
                     'unitcost' => $item->price,
                     'total' => $item->subtotal,
-                ]);
-    
-                DB::table('products')
-                    ->where('id', $item->id)
-                    ->decrement('quantity', $item->qty);
-    
-                InventoryMovement::create([
-                    'product_id' => $item->id,
-                    'type' => 'out',
-                    'quantity' => $item->qty,
                 ]);
             }
     

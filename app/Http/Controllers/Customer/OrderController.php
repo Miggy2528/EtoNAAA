@@ -130,7 +130,7 @@ class OrderController extends Controller
                 'estimated_delivery' => now()->addDays(3), // 3 days delivery estimate
             ]);
 
-            // Create order details
+            // Create order details (stock will be reduced when order is completed)
             foreach ($items as $item) {
                 $order->details()->create([
                     'product_id' => $item['product']->id,
@@ -138,9 +138,6 @@ class OrderController extends Controller
                     'price' => $item['price'],
                     'total' => $item['price'] * $item['quantity'],
                 ]);
-
-                // Update product quantity
-                $item['product']->decrement('quantity', $item['quantity']);
             }
 
             // Create notification

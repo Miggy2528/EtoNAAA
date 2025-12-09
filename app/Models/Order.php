@@ -128,9 +128,34 @@ class Order extends Model
 
             $customerNotificationService = app(CustomerNotificationService::class);
 
+            // If status changed to complete - reduce product stock
+            if ($newStatusNormalized === 'complete' && $originalStatusNormalized !== 'complete') {
+                // Ensure details relationship is loaded
+                if (!$order->relationLoaded('details')) {
+                    $order->load('details.product');
+                }
+
+                // Reduce stock for each product in the order
+                foreach ($order->details as $detail) {
+                    if ($detail->product) {
+                        $detail->product->decrement('quantity', $detail->quantity);
+                        
+                        // Create inventory movement record
+                        \App\Models\InventoryMovement::create([
+                            'product_id' => $detail->product_id,
+                            'type' => 'out',
+                            'quantity' => $detail->quantity,
+                        ]);
+                    }
+                }
+
+                // Send order completed notification
+                $customerNotificationService->createOrderCompletedNotification($order);
+            }
+
             // If status changed from pending to complete (approved)
             if ($originalStatusNormalized === 'pending' && $newStatusNormalized === 'complete') {
-                $customerNotificationService->createOrderCompletedNotification($order);
+                // Already handled above in the 'complete' status check
             }
 
             // If status changed to cancelled (admin cancelled)

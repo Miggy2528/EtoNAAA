@@ -194,10 +194,10 @@
                                         </div>
                                     </div>
 
-                                    {{-- Price per KG --}}
+                                    {{-- Selling Price --}}
                                     <div class="col-md-6">
                                         <div class="mb-3">
-                                            <label for="price_per_kg" class="form-label">Price per KG</label>
+                                            <label for="price_per_kg" class="form-label">Selling Price</label>
                                             <input type="number" 
                                                    name="price_per_kg" 
                                                    id="price_per_kg" 
@@ -215,7 +215,7 @@
 
                                     {{-- Other Product Fields --}}
                                     <div class="col-md-6">
-                                        <x-input type="number" label="Cost" name="buying_price"
+                                        <x-input type="number" label="Cost Unit Price" name="buying_price"
                                                  id="buying_price" placeholder="0"
                                                  value="{{ old('buying_price') }}" />
                                     </div>

@@ -226,7 +226,7 @@
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label" for="buying_price">
-                                                Buying price
+                                                Cost Unit Price
                                                 <span class="text-danger">*</span>
                                             </label>
 
@@ -301,7 +301,7 @@
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label for="price_per_kg" class="form-label">
-                                                {{ __('Price Per KG') }}
+                                                {{ __('Selling Price') }}
                                                 <span class="text-danger">*</span>
                                             </label>
 

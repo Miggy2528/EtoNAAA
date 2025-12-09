@@ -95,14 +95,14 @@ class SupplierAuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'contact_person' => $request->name,
-            'phone' => '', // Can be updated later in profile
-            'address' => '', // Can be updated later in profile
+            'phone' => null, // Can be updated later in profile
+            'address' => null, // Can be updated later in profile
             'shopname' => $request->name . '\'s Shop',
             'type' => 'wholesaler', // Default type
             'status' => 'active',
             'account_holder' => $request->name,
-            'account_number' => '',
-            'bank_name' => '',
+            'account_number' => null,
+            'bank_name' => null,
         ]);
 
         event(new Registered($user));

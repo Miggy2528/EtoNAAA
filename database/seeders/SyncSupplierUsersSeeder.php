@@ -45,14 +45,14 @@ class SyncSupplierUsersSeeder extends Seeder
                 'name' => $user->name,
                 'email' => $user->email,
                 'contact_person' => $user->name,
-                'phone' => '', // Can be updated later in profile
-                'address' => '', // Can be updated later in profile
+                'phone' => null, // Can be updated later in profile
+                'address' => null, // Can be updated later in profile
                 'shopname' => $user->name . "'s Shop",
                 'type' => 'wholesaler', // Default type
                 'status' => 'active',
                 'account_holder' => $user->name,
-                'account_number' => '',
-                'bank_name' => '',
+                'account_number' => null,
+                'bank_name' => null,
             ]);
             
             $this->command->info("✅ Created supplier record for: {$user->name} ({$user->email})");

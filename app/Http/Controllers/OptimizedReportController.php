@@ -244,11 +244,33 @@ class OptimizedReportController extends Controller
                     ->groupBy('payment_type')
                     ->get();
 
+                // Calculate total expenses from expense tables (non-void where applicable)
+                $utilities = DB::table('utility_expenses')
+                    ->where('is_void', false)
+                    ->sum('amount');
+
+                $payroll = DB::table('payroll_records')
+                    ->where(function($query) {
+                        $query->where('is_void', false)->orWhereNull('is_void');
+                    })
+                    ->sum('total_salary');
+
+                $otherExpenses = DB::table('other_expenses')
+                    ->where(function($query) {
+                        $query->where('is_void', false)->orWhereNull('is_void');
+                    })
+                    ->sum('amount');
+
+                $totalExpenses = (float) $utilities + (float) $payroll + (float) $otherExpenses;
+                $netIncome = (float) $basicMetrics->total_sales - $totalExpenses;
+
                 return [
                     'status' => 'success',
                     'data' => [
                         'total_sales' => (float) $basicMetrics->total_sales,
                         'average_daily_sales' => (float) $basicMetrics->average_daily_sales,
+                        'total_expenses' => $totalExpenses,
+                        'net_income' => $netIncome,
                         'top_product_by_quantity' => $topProductByQuantity?->name ?? 'No sales data',
                         'top_product_quantity' => (int) ($topProductByQuantity?->total_quantity ?? 0),
                         'top_product_by_revenue' => $topProductByRevenue?->name ?? 'No sales data',
@@ -278,22 +300,34 @@ class OptimizedReportController extends Controller
     /**
      * Get supplier analytics with caching and optimized queries
      */
-    public function supplierAnalytics(): JsonResponse
+    public function supplierAnalytics(Request $request): JsonResponse
     {
-        return Cache::remember(self::CACHE_KEYS['suppliers'], self::CACHE_DURATION, function () {
+        $dateFrom = $request->query('date_from');
+        $dateTo = $request->query('date_to');
+
+        return Cache::remember(self::CACHE_KEYS['suppliers'], self::CACHE_DURATION, function () use ($dateFrom, $dateTo) {
             try {
+                $now = Carbon::now();
+                $defaultFrom = $now->subDays(30)->format('Y-m-d');
+
+                $effectiveFrom = $dateFrom ?: $defaultFrom;
+                $effectiveTo = $dateTo ?: $now->format('Y-m-d');
+
                 // Basic supplier metrics with single query
                 $basicMetrics = DB::table('suppliers')
                     ->leftJoin('purchases', 'suppliers.id', '=', 'purchases.supplier_id')
                     ->selectRaw('
                         COUNT(DISTINCT suppliers.id) as total_suppliers,
-                        COUNT(DISTINCT CASE WHEN purchases.date >= ? THEN suppliers.id END) as active_suppliers,
-                        COUNT(CASE WHEN purchases.date >= ? THEN purchases.id END) as recent_purchases,
-                        SUM(CASE WHEN purchases.date >= ? AND purchases.status = ? THEN purchases.total_amount ELSE 0 END) as total_purchase_amount
+                        COUNT(DISTINCT CASE WHEN purchases.date >= ? AND purchases.date <= ? THEN suppliers.id END) as active_suppliers,
+                        COUNT(CASE WHEN purchases.date >= ? AND purchases.date <= ? THEN purchases.id END) as recent_purchases,
+                        SUM(CASE WHEN purchases.date >= ? AND purchases.date <= ? AND purchases.status = ? THEN purchases.total_amount ELSE 0 END) as total_purchase_amount
                     ', [
-                        Carbon::now()->subDays(30)->format('Y-m-d'),
-                        Carbon::now()->subDays(30)->format('Y-m-d'),
-                        Carbon::now()->subDays(30)->format('Y-m-d'),
+                        $effectiveFrom,
+                        $effectiveTo,
+                        $effectiveFrom,
+                        $effectiveTo,
+                        $effectiveFrom,
+                        $effectiveTo,
                         PurchaseStatus::APPROVED->value
                     ])
                     ->first();
@@ -303,6 +337,9 @@ class OptimizedReportController extends Controller
                     ->leftJoin('purchases', 'suppliers.id', '=', 'purchases.supplier_id')
                     ->select('suppliers.id', 'suppliers.name', 'suppliers.email', 'suppliers.phone',
                              DB::raw('COUNT(purchases.id) as purchase_count'))
+                    ->when($dateFrom || $dateTo, function ($query) use ($effectiveFrom, $effectiveTo) {
+                        return $query->whereBetween('purchases.date', [$effectiveFrom, $effectiveTo]);
+                    })
                     ->groupBy('suppliers.id', 'suppliers.name', 'suppliers.email', 'suppliers.phone')
                     ->orderBy('purchase_count', 'desc')
                     ->first();
@@ -311,13 +348,16 @@ class OptimizedReportController extends Controller
                 $topSupplierByAmount = DB::table('suppliers')
                     ->leftJoin('purchases', 'suppliers.id', '=', 'purchases.supplier_id')
                     ->where('purchases.status', PurchaseStatus::APPROVED->value)
+                    ->when($dateFrom || $dateTo, function ($query) use ($effectiveFrom, $effectiveTo) {
+                        return $query->whereBetween('purchases.date', [$effectiveFrom, $effectiveTo]);
+                    })
                     ->select('suppliers.id', 'suppliers.name', 'suppliers.email', 'suppliers.phone',
                              DB::raw('SUM(purchases.total_amount) as total_amount'))
                     ->groupBy('suppliers.id', 'suppliers.name', 'suppliers.email', 'suppliers.phone')
                     ->orderBy('total_amount', 'desc')
                     ->first();
 
-                // All-time metrics with single query
+                // All-time metrics with single query (still all-time, not filtered)
                 $allTimeMetrics = DB::table('purchases')
                     ->where('status', PurchaseStatus::APPROVED->value)
                     ->selectRaw('
@@ -326,8 +366,9 @@ class OptimizedReportController extends Controller
                     ')
                     ->first();
 
-                // Purchase trend with single query
+                // Purchase trend over last 7 days (unfiltered, recent daily deliveries)
                 $purchaseTrend = [];
+                $recentDailyDeliveries = [];
                 for ($i = 6; $i >= 0; $i--) {
                     $date = Carbon::now()->subDays($i)->format('Y-m-d');
                     $dailyPurchases = DB::table('purchases')
@@ -335,9 +376,24 @@ class OptimizedReportController extends Controller
                         ->where('status', PurchaseStatus::APPROVED->value)
                         ->sum('total_amount');
                     $purchaseTrend[] = (float) $dailyPurchases;
+                    $recentDailyDeliveries[] = [
+                        'date' => $date,
+                        'total_amount' => (float) $dailyPurchases
+                    ];
                 }
 
-                // Monthly purchase comparison
+                // Today deliveries (recent daily deliver)
+                $todayDate = Carbon::now()->format('Y-m-d');
+                $todayDeliveriesAmount = DB::table('purchases')
+                    ->where('date', $todayDate)
+                    ->where('status', PurchaseStatus::APPROVED->value)
+                    ->sum('total_amount');
+                $todayDeliveriesCount = DB::table('purchases')
+                    ->where('date', $todayDate)
+                    ->where('status', PurchaseStatus::APPROVED->value)
+                    ->count();
+
+                // Monthly purchase comparison (still using calendar months)
                 $monthlyPurchaseData = DB::table('purchases')
                     ->where('status', PurchaseStatus::APPROVED->value)
                     ->selectRaw('
@@ -383,9 +439,14 @@ class OptimizedReportController extends Controller
                         'all_time_purchase_amount' => (float) $allTimeMetrics->all_time_purchase_amount,
                         'average_purchase_value' => (float) $allTimeMetrics->average_purchase_value,
                         'purchase_trend' => $purchaseTrend,
+                        'recent_daily_deliveries' => $recentDailyDeliveries,
+                        'today_deliveries_amount' => (float) $todayDeliveriesAmount,
+                        'today_deliveries_count' => (int) $todayDeliveriesCount,
                         'current_month_purchases' => (float) $monthlyPurchaseData->current_month_purchases,
                         'last_month_purchases' => (float) $monthlyPurchaseData->last_month_purchases,
                         'monthly_purchase_growth_percentage' => round($monthlyPurchaseGrowth, 2),
+                        'filter_date_from' => $effectiveFrom,
+                        'filter_date_to' => $effectiveTo,
                         'generated_at' => Carbon::now()->toISOString()
                     ]
                 ];
@@ -522,7 +583,7 @@ class OptimizedReportController extends Controller
                 // Get all analytics data
                 $inventoryData = $this->inventoryAnalytics()->getData(true);
                 $salesData = $this->salesAnalytics()->getData(true);
-                $supplierData = $this->supplierAnalytics()->getData(true);
+                $supplierData = $this->supplierAnalytics(new Request([]))->getData(true);
                 $staffData = $this->staffPerformanceAnalytics()->getData(true);
 
                 return [

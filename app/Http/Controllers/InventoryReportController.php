@@ -7,6 +7,7 @@ use App\Models\Staff;
 use App\Models\ProductUpdateLog;
 use App\Models\MeatCut;
 use App\Models\Category;
+use App\Models\InventoryMovement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -46,11 +47,11 @@ class InventoryReportController extends Controller
             if ($dateFrom && $dateTo) {
                 $from = Carbon::parse($dateFrom)->startOfDay();
                 $to = Carbon::parse($dateTo)->endOfDay();
-                $query->whereBetween('created_at', [$from, $to]);
+                $query->whereBetween('updated_at', [$from, $to]);
             } elseif ($dateFrom) {
-                $query->where('created_at', '>=', Carbon::parse($dateFrom)->startOfDay());
+                $query->where('updated_at', '>=', Carbon::parse($dateFrom)->startOfDay());
             } else {
-                $query->where('created_at', '<=', Carbon::parse($dateTo)->endOfDay());
+                $query->where('updated_at', '<=', Carbon::parse($dateTo)->endOfDay());
             }
         })
         ->when($stockStatus, function($query) use ($stockStatus) {
@@ -234,6 +235,14 @@ class InventoryReportController extends Controller
             ->orderBy('expiration_date', 'desc')
             ->get();
 
+        // Inventory in/out movements summary per product
+        $inventoryMovements = InventoryMovement::with('product')
+            ->select('product_id')
+            ->selectRaw("SUM(CASE WHEN type = 'in' THEN quantity ELSE 0 END) as total_in")
+            ->selectRaw("SUM(CASE WHEN type = 'out' THEN quantity ELSE 0 END) as total_out")
+            ->groupBy('product_id')
+            ->get();
+
         return view('reports.inventory', compact(
             'products',
             'totalProducts',
@@ -258,7 +267,8 @@ class InventoryReportController extends Controller
             'animalTypes',
             'expiringProducts',
             'expiredProducts',
-            'productsByBatch'
+            'productsByBatch',
+            'inventoryMovements'
         ));
     }
 

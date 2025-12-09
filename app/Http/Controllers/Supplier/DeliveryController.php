@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use App\Models\Procurement;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class DeliveryController extends Controller
 {
@@ -20,7 +21,7 @@ class DeliveryController extends Controller
 
         if (!$supplier) {
             return view('supplier.deliveries.index', [
-                'procurements' => collect([]),
+                'procurements' => new LengthAwarePaginator([], 0, 15),
                 'supplier' => null,
                 'stats' => $this->getEmptyStats()
             ]);

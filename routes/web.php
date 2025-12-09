@@ -250,6 +250,8 @@ Route::middleware(['auth:web'])->group(function () {
          ->name('suppliers.purchase-order');
         Route::post('/suppliers/{supplier}/purchase-order', [SupplierController::class, 'storePurchaseOrder'])
          ->name('suppliers.purchase-order.store');
+        Route::post('/suppliers/{supplier}/purchase-order/pdf', [SupplierController::class, 'downloadPurchaseOrderPdf'])
+         ->name('suppliers.purchase-order.pdf');
         
     });
 
@@ -302,6 +304,7 @@ Route::post('/admin/orders/{order}/status', [OrderController::class, 'updateOrde
     Route::put('/purchases/{purchase}/edit', [PurchaseController::class, 'update'])->name('purchases.update');
     Route::delete('/purchases/{purchase}', [PurchaseController::class, 'destroy'])->name('purchases.delete');
     Route::post('/purchases/{purchase}/mark-received', [PurchaseController::class, 'markAsReceived'])->name('purchases.mark-received');
+    Route::post('/purchases/{purchase}/mark-complete', [PurchaseController::class, 'markAsComplete'])->name('purchases.mark-complete');
     Route::get('/purchases/{purchase}/download-invoice', [PurchaseController::class, 'downloadInvoice'])->name('purchases.download-invoice');
 
     // Supplier Management Routes
@@ -325,6 +328,8 @@ Route::post('/admin/orders/{order}/status', [OrderController::class, 'updateOrde
         Route::get('/reports/sales-analytics/export-pdf', [\App\Http\Controllers\SalesAnalyticsController::class, 'exportPDF'])->name('reports.sales.analytics.export-pdf');
         Route::get('/reports/sales-analytics/export-csv', [\App\Http\Controllers\SalesAnalyticsController::class, 'exportCSV'])->name('reports.sales.analytics.export-csv');
         Route::get('/reports/sales-analytics/monthly-details', [\App\Http\Controllers\SalesAnalyticsController::class, 'getMonthlyDetails'])->name('reports.sales.analytics.monthly-details');
+        Route::get('/reports/sales-analytics/daily-sales', [\App\Http\Controllers\SalesAnalyticsController::class, 'getDailySales'])->name('reports.sales.analytics.daily-sales');
+        Route::get('/reports/sales-analytics/daily-order-products', [\App\Http\Controllers\SalesAnalyticsController::class, 'getDailyOrderProducts'])->name('reports.sales.analytics.daily-order-products');
         
         // Supplier Analytics Routes
         Route::get('/reports/supplier-analytics', [\App\Http\Controllers\SupplierAnalyticsController::class, 'index'])->name('reports.supplier.analytics');

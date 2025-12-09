@@ -1,9 +1,5 @@
 @extends('layouts.butcher')
 
-@push('page-scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-@endpush
-
 @section('content')
 <div class="container-fluid py-4">
     <!-- Page Header -->

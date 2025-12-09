@@ -45,13 +45,16 @@ class PurchaseController extends Controller
 
     public function show(Purchase $purchase)
     {
-        $purchase->loadMissing(['supplier', 'details', 'createdBy', 'updatedBy'])->get();
+        $purchase->loadMissing([
+            'supplier', 
+            'details.product.category', 
+            'details.product.unit', 
+            'createdBy', 
+            'updatedBy'
+        ]);
 
-        $products = PurchaseDetails::where('purchase_id', $purchase->id)->get();
-
-        return view('purchases.details-purchase', [
-            'purchase' => $purchase,
-            'products' => $products
+        return view('purchases.show', [
+            'purchase' => $purchase
         ]);
     }
 
@@ -171,6 +174,82 @@ class PurchaseController extends Controller
         return redirect()
             ->route('purchases.show', $purchase)
             ->with('success', 'Purchase has been marked as received!');
+    }
+
+    /**
+     * Mark purchase as complete (admin side)
+     */
+    public function markAsComplete(Purchase $purchase)
+    {
+        $statusValue = is_object($purchase->status) ? $purchase->status->value : $purchase->status;
+        
+        // Only allow marking as complete if status is Approved (1) or For Delivery (2)
+        if ($statusValue != 1 && $statusValue != 2) {
+            return redirect()
+                ->route('purchases.show', $purchase)
+                ->with('error', 'Purchase can only be marked as complete from Approved or For Delivery status.');
+        }
+
+        $purchase->update([
+            'status' => 3, // COMPLETE
+            'updated_by' => auth()->user()->id,
+            'notes' => ($purchase->notes ?? '') . "\n\n[Admin - " . now()->format('Y-m-d H:i') . "]: Order marked as Complete by " . auth()->user()->name
+        ]);
+
+        // Create procurement records for supplier analytics
+        $this->createProcurementRecords($purchase);
+
+        return redirect()
+            ->route('purchases.show', $purchase)
+            ->with('success', 'Purchase has been marked as complete!');
+    }
+
+    /**
+     * Create procurement/delivery records when purchase is marked as complete
+     */
+    private function createProcurementRecords($purchase)
+    {
+        // Load purchase details with products
+        $purchase->load('details.product');
+        
+        // Get expected delivery date (use purchase date + 3-7 days as expected)
+        $expectedDeliveryDate = $purchase->date->copy()->addDays(rand(3, 7));
+        
+        // Actual delivery date is now (when marked as complete)
+        $deliveryDate = now();
+        
+        // Determine if on-time or delayed
+        $isOnTime = $deliveryDate <= $expectedDeliveryDate;
+        $status = $isOnTime ? 'on-time' : 'delayed';
+        
+        // Create a procurement record for each product in the purchase
+        foreach ($purchase->details as $detail) {
+            // Skip if procurement already exists for this purchase detail
+            $existingProcurement = \App\Models\Procurement::where('supplier_id', $purchase->supplier_id)
+                ->where('product_id', $detail->product_id)
+                ->where('quantity_supplied', $detail->quantity)
+                ->where('total_cost', $detail->total)
+                ->whereBetween('created_at', [now()->subMinutes(5), now()])
+                ->first();
+                
+            if ($existingProcurement) {
+                continue;
+            }
+            
+            // Calculate defective rate (assume 0-2% for good suppliers)
+            $defectiveRate = rand(0, 200) / 100;
+            
+            \App\Models\Procurement::create([
+                'supplier_id' => $purchase->supplier_id,
+                'product_id' => $detail->product_id,
+                'quantity_supplied' => $detail->quantity,
+                'expected_delivery_date' => $expectedDeliveryDate,
+                'delivery_date' => $deliveryDate,
+                'total_cost' => $detail->total,
+                'status' => $status,
+                'defective_rate' => $defectiveRate,
+            ]);
+        }
     }
 
     public function dailyPurchaseReport()

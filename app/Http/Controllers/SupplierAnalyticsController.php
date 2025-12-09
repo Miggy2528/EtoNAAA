@@ -15,8 +15,13 @@ class SupplierAnalyticsController extends Controller
     /**
      * Display the Supplier Analytics dashboard
      */
-    public function index()
+    public function index(Request $request)
     {
+        // Get date filters and search term
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
+        $search = $request->input('search');
+        
         $suppliers = Supplier::withCount(['procurements', 'purchases'])->get();
         
         // Generate dummy data if no real data exists
@@ -30,14 +35,16 @@ class SupplierAnalyticsController extends Controller
             $monthlyTrends = $this->generateDummyMonthlyTrends();
             $monthlySupplierTrends = $this->generateDummyMonthlyTrendsBySupplier();
             $monthlySupplierDatasets = $this->decorateDatasets($monthlySupplierTrends['datasets']);
+            $recentDeliveries = $this->generateDummyRecentDeliveries();
         } else {
-            $performanceData = $this->getSupplierPerformance();
-            $deliveryTracking = $this->getDeliveryTracking();
-            $procurementInsights = $this->getProcurementInsights();
-            $topSuppliers = $this->getTopSuppliers(4);
-            $monthlyTrends = $this->getMonthlyProcurementTrends();
-            $monthlySupplierTrends = $this->getMonthlyProcurementTrendsBySupplier();
+            $performanceData = $this->getSupplierPerformance($dateFrom, $dateTo);
+            $deliveryTracking = $this->getDeliveryTracking($dateFrom, $dateTo);
+            $procurementInsights = $this->getProcurementInsights($dateFrom, $dateTo);
+            $topSuppliers = $this->getTopSuppliers(4, $dateFrom, $dateTo);
+            $monthlyTrends = $this->getMonthlyProcurementTrends($dateFrom, $dateTo);
+            $monthlySupplierTrends = $this->getMonthlyProcurementTrendsBySupplier($dateFrom, $dateTo);
             $monthlySupplierDatasets = $this->decorateDatasets($monthlySupplierTrends['datasets']);
+            $recentDeliveries = $this->getRecentDeliveries($dateFrom, $dateTo, $search);
         }
         
         return view('reports.supplier-analytics', compact(
@@ -49,6 +56,7 @@ class SupplierAnalyticsController extends Controller
             'monthlyTrends',
             'monthlySupplierTrends',
                         'monthlySupplierDatasets',
+            'recentDeliveries',
             'hasProcurementData'
         ));
     }
@@ -56,9 +64,16 @@ class SupplierAnalyticsController extends Controller
     /**
      * Get supplier performance metrics
      */
-    private function getSupplierPerformance()
+    private function getSupplierPerformance($dateFrom = null, $dateTo = null)
     {
-        $suppliers = Supplier::with(['procurements'])->get();
+        $suppliers = Supplier::with(['procurements' => function($query) use ($dateFrom, $dateTo) {
+            if ($dateFrom) {
+                $query->where('updated_at', '>=', $dateFrom);
+            }
+            if ($dateTo) {
+                $query->where('updated_at', '<=', $dateTo . ' 23:59:59');
+            }
+        }])->get();
         
         $performance = [];
         
@@ -122,10 +137,19 @@ class SupplierAnalyticsController extends Controller
     /**
      * Get delivery tracking data
      */
-    private function getDeliveryTracking()
+    private function getDeliveryTracking($dateFrom = null, $dateTo = null)
     {
-        $onTime = Procurement::where('status', 'on-time')->count();
-        $delayed = Procurement::where('status', 'delayed')->count();
+        $query = Procurement::query();
+        
+        if ($dateFrom) {
+            $query->where('updated_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->where('updated_at', '<=', $dateTo . ' 23:59:59');
+        }
+        
+        $onTime = (clone $query)->where('status', 'on-time')->count();
+        $delayed = (clone $query)->where('status', 'delayed')->count();
         $total = $onTime + $delayed;
         
         $onTimePercentage = $total > 0 ? round(($onTime / $total) * 100, 2) : 0;
@@ -143,16 +167,25 @@ class SupplierAnalyticsController extends Controller
     /**
      * Get procurement insights
      */
-    private function getProcurementInsights()
+    private function getProcurementInsights($dateFrom = null, $dateTo = null)
     {
-        $totalProcurementCost = Procurement::sum('total_cost');
-        $totalQuantitySupplied = Procurement::sum('quantity_supplied');
-        $avgCostPerProcurement = Procurement::avg('total_cost');
-        $totalProcurements = Procurement::count();
+        $query = Procurement::query();
+        
+        if ($dateFrom) {
+            $query->where('updated_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->where('updated_at', '<=', $dateTo . ' 23:59:59');
+        }
+        
+        $totalProcurementCost = (clone $query)->sum('total_cost');
+        $totalQuantitySupplied = (clone $query)->sum('quantity_supplied');
+        $avgCostPerProcurement = (clone $query)->avg('total_cost');
+        $totalProcurements = (clone $query)->count();
         
         // Get recent procurement trend (last 30 days vs previous 30 days)
-        $last30Days = Procurement::where('delivery_date', '>=', Carbon::now()->subDays(30))->sum('total_cost');
-        $previous30Days = Procurement::whereBetween('delivery_date', [
+        $last30Days = Procurement::where('updated_at', '>=', Carbon::now()->subDays(30))->sum('total_cost');
+        $previous30Days = Procurement::whereBetween('updated_at', [
             Carbon::now()->subDays(60),
             Carbon::now()->subDays(30)
         ])->sum('total_cost');
@@ -174,11 +207,19 @@ class SupplierAnalyticsController extends Controller
     /**
      * Get top suppliers by total cost
      */
-    private function getTopSuppliers($limit = 5)
+    private function getTopSuppliers($limit = 5, $dateFrom = null, $dateTo = null)
     {
-        return Supplier::select('suppliers.id', 'suppliers.name')
-            ->join('procurements', 'suppliers.id', '=', 'procurements.supplier_id')
-            ->groupBy('suppliers.id', 'suppliers.name')
+        $query = Supplier::select('suppliers.id', 'suppliers.name')
+            ->join('procurements', 'suppliers.id', '=', 'procurements.supplier_id');
+            
+        if ($dateFrom) {
+            $query->where('procurements.updated_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->where('procurements.updated_at', '<=', $dateTo . ' 23:59:59');
+        }
+        
+        return $query->groupBy('suppliers.id', 'suppliers.name')
             ->selectRaw('SUM(procurements.total_cost) as total_spent')
             ->selectRaw('COUNT(procurements.id) as total_procurements')
             ->selectRaw('AVG(procurements.defective_rate) as avg_defect_rate')
@@ -194,15 +235,21 @@ class SupplierAnalyticsController extends Controller
     /**
      * Get monthly procurement cost trends (last 12 months)
      */
-    private function getMonthlyProcurementTrends()
+    private function getMonthlyProcurementTrends($dateFrom = null, $dateTo = null)
     {
-        $trends = Procurement::select(
-                DB::raw('DATE_FORMAT(delivery_date, "%Y-%m") as month'),
+        $query = Procurement::select(
+                DB::raw('DATE_FORMAT(updated_at, "%Y-%m") as month'),
                 DB::raw('SUM(total_cost) as total_cost'),
                 DB::raw('COUNT(*) as procurement_count')
-            )
-            ->where('delivery_date', '>=', Carbon::now()->subMonths(12))
-            ->groupBy('month')
+            );
+            
+        if ($dateFrom && $dateTo) {
+            $query->whereBetween('updated_at', [$dateFrom, $dateTo . ' 23:59:59']);
+        } else {
+            $query->where('updated_at', '>=', Carbon::now()->subMonths(12));
+        }
+        
+        $trends = $query->groupBy('month')
             ->orderBy('month')
             ->get();
         
@@ -247,10 +294,17 @@ class SupplierAnalyticsController extends Controller
     /**
      * Get monthly procurement cost trends by supplier (last 12 months)
      */
-    private function getMonthlyProcurementTrendsBySupplier()
+    private function getMonthlyProcurementTrendsBySupplier($dateFrom = null, $dateTo = null)
     {
-        $rawMonths = Procurement::where('delivery_date', '>=', Carbon::now()->subMonths(12))
-            ->select(DB::raw('DATE_FORMAT(delivery_date, "%Y-%m") as month'))
+        $monthQuery = Procurement::query();
+        
+        if ($dateFrom && $dateTo) {
+            $monthQuery->whereBetween('updated_at', [$dateFrom, $dateTo . ' 23:59:59']);
+        } else {
+            $monthQuery->where('updated_at', '>=', Carbon::now()->subMonths(12));
+        }
+        
+        $rawMonths = $monthQuery->select(DB::raw('DATE_FORMAT(updated_at, "%Y-%m") as month'))
             ->groupBy('month')
             ->orderBy('month')
             ->pluck('month')
@@ -260,19 +314,31 @@ class SupplierAnalyticsController extends Controller
             return Carbon::parse($m . '-01')->format('M Y');
         }, $rawMonths);
 
-        $suppliers = Supplier::select('suppliers.id', 'suppliers.name')
-            ->join('procurements', 'suppliers.id', '=', 'procurements.supplier_id')
-            ->where('procurements.delivery_date', '>=', Carbon::now()->subMonths(12))
-            ->groupBy('suppliers.id', 'suppliers.name')
+        $suppliersQuery = Supplier::select('suppliers.id', 'suppliers.name')
+            ->join('procurements', 'suppliers.id', '=', 'procurements.supplier_id');
+            
+        if ($dateFrom && $dateTo) {
+            $suppliersQuery->whereBetween('procurements.updated_at', [$dateFrom, $dateTo . ' 23:59:59']);
+        } else {
+            $suppliersQuery->where('procurements.updated_at', '>=', Carbon::now()->subMonths(12));
+        }
+        
+        $suppliers = $suppliersQuery->groupBy('suppliers.id', 'suppliers.name')
             ->orderBy('suppliers.name')
             ->limit(4)
             ->get();
 
         $datasets = [];
         foreach ($suppliers as $supplier) {
-            $rows = Procurement::where('supplier_id', $supplier->id)
-                ->where('delivery_date', '>=', Carbon::now()->subMonths(12))
-                ->select(DB::raw('DATE_FORMAT(delivery_date, "%Y-%m") as month'), DB::raw('SUM(total_cost) as total_cost'))
+            $rowsQuery = Procurement::where('supplier_id', $supplier->id);
+            
+            if ($dateFrom && $dateTo) {
+                $rowsQuery->whereBetween('updated_at', [$dateFrom, $dateTo . ' 23:59:59']);
+            } else {
+                $rowsQuery->where('updated_at', '>=', Carbon::now()->subMonths(12));
+            }
+            
+            $rows = $rowsQuery->select(DB::raw('DATE_FORMAT(updated_at, "%Y-%m") as month'), DB::raw('SUM(total_cost) as total_cost'))
                 ->groupBy('month')
                 ->orderBy('month')
                 ->pluck('total_cost', 'month');
@@ -292,6 +358,63 @@ class SupplierAnalyticsController extends Controller
             'months' => $months,
             'datasets' => $datasets,
         ];
+    }
+
+    /**
+     * Get recent daily deliveries (last 60 days by default)
+     */
+    private function getRecentDeliveries($dateFrom = null, $dateTo = null, $search = null)
+    {
+        $query = Procurement::with(['supplier', 'product'])
+            ->whereNotNull('delivery_date');
+            
+        // Apply date filters if provided
+        if ($dateFrom || $dateTo) {
+            if ($dateFrom && $dateTo) {
+                // Both dates provided - use between
+                $query->whereBetween('updated_at', [$dateFrom, $dateTo . ' 23:59:59']);
+            } elseif ($dateFrom) {
+                // Only date from provided
+                $query->where('updated_at', '>=', $dateFrom);
+            } elseif ($dateTo) {
+                // Only date to provided
+                $query->where('updated_at', '<=', $dateTo . ' 23:59:59');
+            }
+        } else {
+            // No filters - show last 60 days by default
+            $query->where('updated_at', '>=', Carbon::now()->subDays(60));
+        }
+        
+        // Apply search filter if provided
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->whereHas('supplier', function($sq) use ($search) {
+                    $sq->where('name', 'like', '%' . $search . '%');
+                })
+                ->orWhereHas('product', function($pq) use ($search) {
+                    $pq->where('name', 'like', '%' . $search . '%');
+                });
+            });
+        }
+        
+        return $query->orderBy('updated_at', 'desc')
+            ->limit(15)
+            ->get()
+            ->map(function ($procurement) {
+                return [
+                    'id' => $procurement->id,
+                    'supplier_name' => $procurement->supplier->name ?? 'N/A',
+                    'product_name' => $procurement->product->name ?? 'N/A',
+                    'quantity' => $procurement->quantity_supplied,
+                    'total_cost' => $procurement->total_cost,
+                    'delivery_date' => $procurement->delivery_date,
+                    'expected_date' => $procurement->expected_delivery_date,
+                    'status' => $procurement->status,
+                    'defective_rate' => $procurement->defective_rate,
+                    'delay_days' => $procurement->getDeliveryDelayDays(),
+                    'is_on_time' => $procurement->isOnTime(),
+                ];
+            });
     }
 
     /**
@@ -510,5 +633,53 @@ class SupplierAnalyticsController extends Controller
         }
         
         return collect($trends);
+    }
+
+    /**
+     * Generate dummy recent deliveries (last 15 days)
+     */
+    private function generateDummyRecentDeliveries()
+    {
+        $suppliers = Supplier::take(4)->get();
+        if ($suppliers->isEmpty()) {
+            $suppliers = collect([
+                (object)['name' => 'Supplier 1'],
+                (object)['name' => 'Supplier 2'],
+            ]);
+        }
+        
+        $deliveries = [];
+        $products = ['Beef Sirloin', 'Pork Chops', 'Chicken Breast', 'Lamb Ribs', 'Beef Tenderloin'];
+        $statuses = ['on-time', 'on-time', 'on-time', 'on-time', 'delayed']; // 80% on-time
+        
+        for ($i = 0; $i < 15; $i++) {
+            $daysAgo = $i;
+            $deliveryDate = Carbon::now()->subDays($daysAgo);
+            $expectedDate = (clone $deliveryDate)->subDays(rand(2, 5));
+            $status = $statuses[array_rand($statuses)];
+            
+            if ($status === 'delayed') {
+                $deliveryDate = (clone $expectedDate)->addDays(rand(1, 5));
+                $delayDays = rand(1, 5);
+            } else {
+                $delayDays = 0;
+            }
+            
+            $deliveries[] = [
+                'id' => 1000 + $i,
+                'supplier_name' => $suppliers->random()->name,
+                'product_name' => $products[array_rand($products)],
+                'quantity' => rand(50, 200),
+                'total_cost' => rand(8000, 25000),
+                'delivery_date' => $deliveryDate,
+                'expected_date' => $expectedDate,
+                'status' => $status,
+                'defective_rate' => rand(0, 30) / 10,
+                'delay_days' => $delayDays,
+                'is_on_time' => $status === 'on-time',
+            ];
+        }
+        
+        return collect($deliveries);
     }
 }

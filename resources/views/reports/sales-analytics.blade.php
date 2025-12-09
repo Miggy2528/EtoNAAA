@@ -282,6 +282,7 @@
                                 <tr>
                                     <th>Month</th>
                                     <th class="text-end">Total Sales (₱)</th>
+                                    <th class="text-end">Daily Avg Sales (₱)</th>
                                     <th class="text-end">Net Profit (₱)</th>
                                     <th class="text-center">Actions</th>
                                 </tr>
@@ -291,6 +292,7 @@
                                     <tr>
                                         <td>{{ $data['month'] }}</td>
                                         <td class="text-end">₱{{ number_format($data['total_sales'], 2) }}</td>
+                                        <td class="text-end">₱{{ number_format($data['daily_average'], 2) }}</td>
                                         <td class="text-end">₱{{ number_format($data['net_profit'], 2) }}</td>
                                         <td class="text-center">
                                             <button class="btn btn-sm btn-outline-primary monthly-details-btn" 
@@ -304,12 +306,381 @@
                                 <tr class="table-secondary fw-bold">
                                     <td>Total</td>
                                     <td class="text-end">₱{{ number_format($monthlyReportData['grand_total_sales'], 2) }}</td>
+                                    <td class="text-end">₱{{ number_format($monthlyReportData['grand_total_daily_average'], 2) }}</td>
                                     <td class="text-end">₱{{ number_format($monthlyReportData['grand_total_profit'], 2) }}</td>
                                     <td></td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Income Report (Sales - Expenses) -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0 text-white">
+                        <i class="fas fa-money-bill-wave"></i> Monthly Income Report ({{ date('Y') }}) - Sales minus Expenses
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Summary Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-white-50">Total Sales</h6>
+                                    <h4 class="card-title mb-0">₱{{ number_format($monthlyIncomeReport['total_sales'], 2) }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-danger text-white">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-white-50">Total Expenses</h6>
+                                    <h4 class="card-title mb-0">₱{{ number_format($monthlyIncomeReport['total_expenses'], 2) }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-white-50">Net Income (Sales - Expenses)</h6>
+                                    <h4 class="card-title mb-0">₱{{ number_format($monthlyIncomeReport['total_income'], 2) }}</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-white-50">Avg Profit Margin</h6>
+                                    <h4 class="card-title mb-0">
+                                        <span class="badge {{ $monthlyIncomeReport['avg_margin'] >= 30 ? 'bg-light text-success' : ($monthlyIncomeReport['avg_margin'] >= 15 ? 'bg-light text-warning' : 'bg-light text-danger') }}">
+                                            {{ number_format($monthlyIncomeReport['avg_margin'], 2) }}%
+                                        </span>
+                                    </h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calculation Formula Display -->
+                    <div class="alert alert-success mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">
+                                <h5 class="mb-3"><i class="fas fa-calculator"></i> <strong>Monthly Income Calculation:</strong></h5>
+                                <div class="d-flex align-items-center justify-content-center flex-wrap" style="font-size: 1.2rem;">
+                                    <div class="text-center mx-3">
+                                        <div class="text-primary fw-bold">Total Sales</div>
+                                        <div class="display-6 text-primary">₱{{ number_format($monthlyIncomeReport['total_sales'], 2) }}</div>
+                                    </div>
+                                    <div class="mx-3">
+                                        <i class="fas fa-minus fa-2x"></i>
+                                    </div>
+                                    <div class="text-center mx-3">
+                                        <div class="text-danger fw-bold">Total Expenses</div>
+                                        <div class="display-6 text-danger">₱{{ number_format($monthlyIncomeReport['total_expenses'], 2) }}</div>
+                                    </div>
+                                    <div class="mx-3">
+                                        <i class="fas fa-equals fa-2x"></i>
+                                    </div>
+                                    <div class="text-center mx-3">
+                                        <div class="text-success fw-bold">Net Income</div>
+                                        <div class="display-6 text-success fw-bold">₱{{ number_format($monthlyIncomeReport['total_income'], 2) }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Income Chart -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="chart-container">
+                                <canvas id="monthlyIncomeChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Breakdown Table -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Month</th>
+                                    <th class="text-end">Sales (₱)</th>
+                                    <th class="text-end">Expenses (₱)</th>
+                                    <th class="text-end">Utilities (₱)</th>
+                                    <th class="text-end">Payroll (₱)</th>
+                                    <th class="text-end">Other (₱)</th>
+                                    <th class="text-end bg-success text-white">Net Income (₱)<br><small>(Sales - Expenses)</small></th>
+                                    <th class="text-center">Margin</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($monthlyIncomeReport['data'] as $data)
+                                    <tr>
+                                        <td><strong>{{ $data['month'] }}</strong></td>
+                                        <td class="text-end">₱{{ number_format($data['sales'], 2) }}</td>
+                                        <td class="text-end text-danger">₱{{ number_format($data['expenses'], 2) }}</td>
+                                        <td class="text-end text-muted">₱{{ number_format($data['utilities'], 2) }}</td>
+                                        <td class="text-end text-muted">₱{{ number_format($data['payroll'], 2) }}</td>
+                                        <td class="text-end text-muted">₱{{ number_format($data['other_expenses'], 2) }}</td>
+                                        <td class="text-end {{ $data['income'] >= 0 ? 'text-success' : 'text-danger' }} fw-bold">
+                                            ₱{{ number_format($data['income'], 2) }}
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge {{ $data['margin'] >= 30 ? 'bg-success' : ($data['margin'] >= 15 ? 'bg-warning' : 'bg-danger') }}">
+                                                {{ number_format($data['margin'], 2) }}%
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                                <tr class="table-secondary fw-bold">
+                                    <td>TOTAL</td>
+                                    <td class="text-end">₱{{ number_format($monthlyIncomeReport['total_sales'], 2) }}</td>
+                                    <td class="text-end text-danger">₱{{ number_format($monthlyIncomeReport['total_expenses'], 2) }}</td>
+                                    <td class="text-end">-</td>
+                                    <td class="text-end">-</td>
+                                    <td class="text-end">-</td>
+                                    <td class="text-end {{ $monthlyIncomeReport['total_income'] >= 0 ? 'text-success' : 'text-danger' }}">
+                                        ₱{{ number_format($monthlyIncomeReport['total_income'], 2) }}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge {{ $monthlyIncomeReport['avg_margin'] >= 30 ? 'bg-success' : ($monthlyIncomeReport['avg_margin'] >= 15 ? 'bg-warning' : 'bg-danger') }}">
+                                            {{ number_format($monthlyIncomeReport['avg_margin'], 2) }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle"></i> <strong>Note:</strong> This report shows actual income by calculating Sales minus Expenses (Utilities + Payroll + Other Expenses). 
+                        Color coding: <span class="badge bg-success">Green ≥30%</span>, <span class="badge bg-warning">Yellow 15-29%</span>, <span class="badge bg-danger">Red <15%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Sales Analysis -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0 text-white">
+                        <i class="fas fa-calendar-day"></i> Daily Sales Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Filter Controls -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <label for="daily-filter-type" class="form-label">Filter Type</label>
+                            <select id="daily-filter-type" class="form-select">
+                                <option value="single">Single Date</option>
+                                <option value="range" selected>Date Range</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3" id="single-date-container">
+                            <label for="filter-date" class="form-label">Date</label>
+                            <input type="date" id="filter-date" class="form-control" max="{{ date('Y-m-d') }}">
+                        </div>
+                        <div class="col-md-3" id="start-date-container">
+                            <label for="filter-start-date" class="form-label">Start Date</label>
+                            <input type="date" id="filter-start-date" class="form-control" max="{{ date('Y-m-d') }}" value="{{ date('Y-m-01') }}">
+                        </div>
+                        <div class="col-md-3" id="end-date-container">
+                            <label for="filter-end-date" class="form-label">End Date</label>
+                            <input type="date" id="filter-end-date" class="form-control" max="{{ date('Y-m-d') }}" value="{{ date('Y-m-d') }}">
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button id="apply-daily-filter" class="btn btn-primary w-100">
+                                <i class="fas fa-filter"></i> Apply Filter
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div id="daily-summary-cards" class="row mb-4" style="display: none;">
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-white-50">Total Sales</h6>
+                                    <h4 class="card-title mb-0" id="daily-total-sales">₱0.00</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-white-50">Total Orders</h6>
+                                    <h4 class="card-title mb-0" id="daily-total-orders">0</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-white-50">Average Order</h6>
+                                    <h4 class="card-title mb-0" id="daily-avg-order">₱0.00</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2 text-white-50">Total Profit</h6>
+                                    <h4 class="card-title mb-0" id="daily-total-profit">₱0.00</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Sales Chart -->
+                    <div id="daily-chart-container" class="mb-4" style="display: none;">
+                        <div class="chart-container">
+                            <canvas id="dailySalesChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Daily Sales Table -->
+                    <div id="daily-sales-table-container" style="display: none;">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th class="text-end">Total Sales (₱)</th>
+                                        <th class="text-center">Orders</th>
+                                        <th class="text-end">Avg Order (₱)</th>
+                                        <th class="text-end">Profit (₱)</th>
+                                        <th class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="daily-sales-tbody">
+                                    <!-- Data will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div id="daily-sales-loading" class="text-center" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading daily sales data...</p>
+                    </div>
+
+                    <!-- No Data Message -->
+                    <div id="daily-sales-no-data" class="alert alert-warning" style="display: none;">
+                        <i class="fas fa-info-circle"></i> No sales data found for the selected date range.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Daily Sales Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0 text-white">
+                        <i class="fas fa-calendar-check"></i> Recent Daily Sales (Last 30 Days)
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if($recentDailySales->count() > 0)
+                        <!-- Summary Cards -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card bg-primary text-white">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-white-50">Total Days with Sales</h6>
+                                        <h4 class="card-title mb-0">{{ $recentDailySales->count() }}</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-white-50">Total Sales</h6>
+                                        <h4 class="card-title mb-0">₱{{ number_format($recentDailySales->sum('total_sales'), 2) }}</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-info text-white">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-white-50">Total Orders</h6>
+                                        <h4 class="card-title mb-0">{{ number_format($recentDailySales->sum('total_orders')) }}</h4>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body">
+                                        <h6 class="card-subtitle mb-2 text-white-50">Avg Daily Sales</h6>
+                                        <h4 class="card-title mb-0">₱{{ number_format($recentDailySales->count() > 0 ? $recentDailySales->sum('total_sales') / $recentDailySales->count() : 0, 2) }}</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Daily Sales Table -->
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Date</th>
+                                        <th class="text-center">Orders</th>
+                                        <th class="text-end">Total Sales (₱)</th>
+                                        <th class="text-end">Avg Order (₱)</th>
+                                        <th class="text-end">Net Profit (₱)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($recentDailySales->take(15) as $daySale)
+                                        <tr>
+                                            <td><strong>{{ $daySale['date'] }}</strong></td>
+                                            <td class="text-center">
+                                                <button class="btn btn-sm btn-info badge view-daily-orders-btn" 
+                                                        data-date="{{ $daySale['date_raw'] }}"
+                                                        data-date-label="{{ $daySale['date'] }}"
+                                                        style="cursor: pointer; border: none;">
+                                                    {{ $daySale['total_orders'] }} orders
+                                                </button>
+                                            </td>
+                                            <td class="text-end">₱{{ number_format($daySale['total_sales'], 2) }}</td>
+                                            <td class="text-end">₱{{ number_format($daySale['average_order'], 2) }}</td>
+                                            <td class="text-end text-success">₱{{ number_format($daySale['net_profit'], 2) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot class="table-secondary fw-bold">
+                                    <tr>
+                                        <td>Total (Last {{ $recentDailySales->take(15)->count() }} Days)</td>
+                                        <td class="text-center">{{ number_format($recentDailySales->take(15)->sum('total_orders')) }}</td>
+                                        <td class="text-end">₱{{ number_format($recentDailySales->take(15)->sum('total_sales'), 2) }}</td>
+                                        <td class="text-end">₱{{ number_format($recentDailySales->take(15)->count() > 0 ? $recentDailySales->take(15)->sum('total_sales') / $recentDailySales->take(15)->sum('total_orders') : 0, 2) }}</td>
+                                        <td class="text-end">₱{{ number_format($recentDailySales->take(15)->sum('net_profit'), 2) }}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    @else
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No sales data available for the last 30 days.
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -437,6 +808,74 @@ new Chart(trendsCtx, {
                 beginAtZero: true,
                 ticks: {
                     callback: value => '₱' + value.toLocaleString('en-PH')
+                }
+            }
+        }
+    }
+});
+
+// Monthly Income Report Chart
+const monthlyIncomeData = @json($monthlyIncomeReport);
+const incomeCtx = document.getElementById('monthlyIncomeChart').getContext('2d');
+new Chart(incomeCtx, {
+    type: 'bar',
+    data: {
+        labels: monthlyIncomeData.data.map(m => m.month),
+        datasets: [
+            {
+                label: 'Sales',
+                data: monthlyIncomeData.data.map(m => m.sales),
+                backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                borderColor: chartColors.primary,
+                borderWidth: 2
+            },
+            {
+                label: 'Expenses',
+                data: monthlyIncomeData.data.map(m => m.expenses),
+                backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                borderColor: chartColors.danger,
+                borderWidth: 2
+            },
+            {
+                label: 'Net Income',
+                data: monthlyIncomeData.data.map(m => m.income),
+                backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                borderColor: chartColors.success,
+                borderWidth: 2
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { 
+                position: 'top',
+                labels: {
+                    font: {
+                        size: 12
+                    }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(ctx) {
+                        return ctx.dataset.label + ': ₱' + ctx.parsed.y.toLocaleString('en-PH', {minimumFractionDigits: 2});
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: value => '₱' + value.toLocaleString('en-PH')
+                }
+            },
+            x: {
+                ticks: {
+                    maxRotation: 45,
+                    minRotation: 45
                 }
             }
         }
@@ -573,6 +1012,12 @@ document.addEventListener('DOMContentLoaded', () => {
             loadMonthlyDetails(month, monthName);
         }
     });
+
+    // Daily Sales Filter Event Listeners
+    initializeDailySalesFilter();
+    
+    // Daily Order Products Event Listeners
+    initializeDailyOrdersView();
 });
 
 // Function to load monthly details
@@ -745,6 +1190,412 @@ function displayMonthlyDetails(data, monthName) {
         '</div>';
     
     document.getElementById('monthly-details-content').innerHTML = content;
+}
+
+// Daily Sales Filter Functions
+let dailySalesChart = null;
+
+function initializeDailySalesFilter() {
+    // Filter type change handler
+    const filterType = document.getElementById('daily-filter-type');
+    const singleDateContainer = document.getElementById('single-date-container');
+    const startDateContainer = document.getElementById('start-date-container');
+    const endDateContainer = document.getElementById('end-date-container');
+    
+    filterType.addEventListener('change', function() {
+        if (this.value === 'single') {
+            singleDateContainer.style.display = 'block';
+            startDateContainer.style.display = 'none';
+            endDateContainer.style.display = 'none';
+        } else {
+            singleDateContainer.style.display = 'none';
+            startDateContainer.style.display = 'block';
+            endDateContainer.style.display = 'block';
+        }
+    });
+    
+    // Initialize display based on default selection
+    if (filterType.value === 'range') {
+        singleDateContainer.style.display = 'none';
+    } else {
+        startDateContainer.style.display = 'none';
+        endDateContainer.style.display = 'none';
+    }
+    
+    // Apply filter button
+    document.getElementById('apply-daily-filter').addEventListener('click', loadDailySalesData);
+}
+
+function loadDailySalesData() {
+    const filterType = document.getElementById('daily-filter-type').value;
+    let params = new URLSearchParams();
+    
+    if (filterType === 'single') {
+        const date = document.getElementById('filter-date').value;
+        if (!date) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Date Required',
+                text: 'Please select a date to filter.'
+            });
+            return;
+        }
+        params.append('date', date);
+    } else {
+        const startDate = document.getElementById('filter-start-date').value;
+        const endDate = document.getElementById('filter-end-date').value;
+        
+        if (!startDate || !endDate) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Dates Required',
+                text: 'Please select both start and end dates.'
+            });
+            return;
+        }
+        
+        if (new Date(startDate) > new Date(endDate)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Date Range',
+                text: 'Start date must be before or equal to end date.'
+            });
+            return;
+        }
+        
+        params.append('start_date', startDate);
+        params.append('end_date', endDate);
+    }
+    
+    // Show loading state
+    document.getElementById('daily-sales-loading').style.display = 'block';
+    document.getElementById('daily-summary-cards').style.display = 'none';
+    document.getElementById('daily-chart-container').style.display = 'none';
+    document.getElementById('daily-sales-table-container').style.display = 'none';
+    document.getElementById('daily-sales-no-data').style.display = 'none';
+    
+    // Fetch data
+    fetch('/reports/sales-analytics/daily-sales?' + params.toString())
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('daily-sales-loading').style.display = 'none';
+            
+            if (data.success && data.daily_data.length > 0) {
+                displayDailySalesData(data);
+            } else {
+                document.getElementById('daily-sales-no-data').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading daily sales:', error);
+            document.getElementById('daily-sales-loading').style.display = 'none';
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to load daily sales data. Please try again.'
+            });
+        });
+}
+
+function displayDailySalesData(data) {
+    // Update summary cards
+    document.getElementById('daily-total-sales').textContent = '₱' + parseFloat(data.summary.total_sales).toLocaleString('en-PH', {minimumFractionDigits: 2});
+    document.getElementById('daily-total-orders').textContent = data.summary.total_orders;
+    document.getElementById('daily-avg-order').textContent = '₱' + parseFloat(data.summary.average_order_value).toLocaleString('en-PH', {minimumFractionDigits: 2});
+    document.getElementById('daily-total-profit').textContent = '₱' + parseFloat(data.summary.total_profit).toLocaleString('en-PH', {minimumFractionDigits: 2});
+    document.getElementById('daily-summary-cards').style.display = 'flex';
+    
+    // Update chart
+    updateDailySalesChart(data.daily_data);
+    document.getElementById('daily-chart-container').style.display = 'block';
+    
+    // Update table
+    const tbody = document.getElementById('daily-sales-tbody');
+    tbody.innerHTML = '';
+    
+    data.daily_data.forEach(day => {
+        const row = document.createElement('tr');
+        row.innerHTML = 
+            '<td>' + day.date + '</td>' +
+            '<td class="text-end">₱' + parseFloat(day.total_sales).toLocaleString('en-PH', {minimumFractionDigits: 2}) + '</td>' +
+            '<td class="text-center">' + day.total_orders + '</td>' +
+            '<td class="text-end">₱' + parseFloat(day.average_order_value).toLocaleString('en-PH', {minimumFractionDigits: 2}) + '</td>' +
+            '<td class="text-end">₱' + parseFloat(day.profit).toLocaleString('en-PH', {minimumFractionDigits: 2}) + '</td>' +
+            '<td class="text-center">' +
+                '<button class="btn btn-sm btn-outline-info view-day-details" data-date="' + day.date_raw + '" data-date-label="' + day.date + '">' +
+                    '<i class="fas fa-eye"></i> View' +
+                '</button>' +
+            '</td>';
+        tbody.appendChild(row);
+    });
+    
+    document.getElementById('daily-sales-table-container').style.display = 'block';
+    
+    // Add event listeners for view buttons
+    document.querySelectorAll('.view-day-details').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const date = this.dataset.date;
+            const dateLabel = this.dataset.dateLabel;
+            loadDailyOrderProducts(date, dateLabel);
+        });
+    });
+}
+
+function updateDailySalesChart(dailyData) {
+    const ctx = document.getElementById('dailySalesChart').getContext('2d');
+    
+    // Destroy existing chart if it exists
+    if (dailySalesChart) {
+        dailySalesChart.destroy();
+    }
+    
+    const labels = dailyData.map(d => d.date);
+    const salesData = dailyData.map(d => parseFloat(d.total_sales));
+    const profitData = dailyData.map(d => parseFloat(d.profit));
+    
+    dailySalesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Total Sales',
+                    data: salesData,
+                    backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                    borderColor: chartColors.success,
+                    borderWidth: 2
+                },
+                {
+                    label: 'Profit',
+                    data: profitData,
+                    backgroundColor: 'rgba(255, 193, 7, 0.7)',
+                    borderColor: chartColors.warning,
+                    borderWidth: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ctx.dataset.label + ': ₱' + ctx.parsed.y.toLocaleString('en-PH', {minimumFractionDigits: 2})
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: value => '₱' + value.toLocaleString('en-PH')
+                    }
+                }
+            }
+        }
+    });
+}
+
+function showDayDetails(orders, dateLabel) {
+    let ordersHtml = '';
+    if (orders.length === 0) {
+        ordersHtml = '<div class="alert alert-info">No orders found for this day.</div>';
+    } else {
+        ordersHtml = '<table class="table table-striped table-hover">' +
+            '<thead>' +
+                '<tr>' +
+                    '<th>Invoice</th>' +
+                    '<th>Customer</th>' +
+                    '<th>Time</th>' +
+                    '<th>Items</th>' +
+                    '<th>Payment</th>' +
+                    '<th class="text-end">Total</th>' +
+                '</tr>' +
+            '</thead>' +
+            '<tbody>';
+        
+        orders.forEach(order => {
+            ordersHtml += '<tr>' +
+                '<td>' + order.invoice_no + '</td>' +
+                '<td>' + order.customer_name + '</td>' +
+                '<td>' + order.order_date + '</td>' +
+                '<td>' + order.items_count + '</td>' +
+                '<td>' + order.payment_type + '</td>' +
+                '<td class="text-end">₱' + parseFloat(order.total).toLocaleString('en-PH', {minimumFractionDigits: 2}) + '</td>' +
+                '</tr>';
+        });
+        
+        ordersHtml += '</tbody></table>';
+    }
+    
+    Swal.fire({
+        title: dateLabel + ' - Order Details',
+        html: ordersHtml,
+        width: '800px',
+        showCloseButton: true,
+        confirmButtonText: 'Close'
+    });
+}
+
+// Daily Order Products Functions
+function initializeDailyOrdersView() {
+    // Add event listeners for view daily orders buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.view-daily-orders-btn')) {
+            const button = e.target.closest('.view-daily-orders-btn');
+            const date = button.dataset.date;
+            const dateLabel = button.dataset.dateLabel;
+            
+            loadDailyOrderProducts(date, dateLabel);
+        }
+    });
+}
+
+function loadDailyOrderProducts(date, dateLabel) {
+    // Show loading state
+    Swal.fire({
+        title: 'Loading...',
+        html: 'Fetching order products for ' + dateLabel,
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Fetch data from API
+    fetch('/reports/sales-analytics/daily-order-products?date=' + date)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayDailyOrderProducts(data, dateLabel);
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to load order products.'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to load order products. Please try again.'
+            });
+        });
+}
+
+function displayDailyOrderProducts(data, dateLabel) {
+    let content = '';
+    
+    // Summary section
+    content += '<div class="row mb-3">';
+    content += '<div class="col-md-4">';
+    content += '<div class="card bg-primary text-white">';
+    content += '<div class="card-body p-2">';
+    content += '<h6 class="mb-0">Total Orders</h6>';
+    content += '<h4 class="mb-0">' + data.summary.total_orders + '</h4>';
+    content += '</div></div></div>';
+    
+    content += '<div class="col-md-4">';
+    content += '<div class="card bg-success text-white">';
+    content += '<div class="card-body p-2">';
+    content += '<h6 class="mb-0">Total Sales</h6>';
+    content += '<h4 class="mb-0">₱' + parseFloat(data.summary.total_sales).toLocaleString('en-PH', {minimumFractionDigits: 2}) + '</h4>';
+    content += '</div></div></div>';
+    
+    content += '<div class="col-md-4">';
+    content += '<div class="card bg-info text-white">';
+    content += '<div class="card-body p-2">';
+    content += '<h6 class="mb-0">Total Items Sold</h6>';
+    content += '<h4 class="mb-0">' + data.summary.total_items + '</h4>';
+    content += '</div></div></div>';
+    content += '</div>';
+    
+    if (data.products.length === 0) {
+        content += '<div class="alert alert-info">No products found for this date.</div>';
+    } else {
+        // Products table
+        content += '<h5 class="mt-3 mb-2"><i class="fas fa-box"></i> Products Sold</h5>';
+        content += '<div class="table-responsive" style="max-height: 400px; overflow-y: auto;">';
+        content += '<table class="table table-sm table-striped table-hover">';
+        content += '<thead class="table-dark" style="position: sticky; top: 0; z-index: 10;">';
+        content += '<tr>';
+        content += '<th>Product Name</th>';
+        content += '<th>Category</th>';
+        content += '<th class="text-center">Quantity</th>';
+        content += '<th class="text-end">Total Sales</th>';
+        content += '<th class="text-center">Orders</th>';
+        content += '</tr>';
+        content += '</thead>';
+        content += '<tbody>';
+        
+        data.products.forEach(product => {
+            content += '<tr>';
+            content += '<td><strong>' + product.product_name + '</strong></td>';
+            content += '<td><span class="badge bg-secondary">' + product.category_name + '</span></td>';
+            content += '<td class="text-center"><span class="badge bg-primary">' + product.quantity + '</span></td>';
+            content += '<td class="text-end">₱' + parseFloat(product.total_sales).toLocaleString('en-PH', {minimumFractionDigits: 2}) + '</td>';
+            content += '<td class="text-center">' + product.orders_count + '</td>';
+            content += '</tr>';
+        });
+        
+        content += '</tbody>';
+        content += '</table>';
+        content += '</div>';
+        
+        // Orders section (collapsible)
+        if (data.orders.length > 0) {
+            content += '<div class="mt-3">';
+            content += '<button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#ordersDetails" aria-expanded="false">';
+            content += '<i class="fas fa-shopping-cart"></i> View All Orders (' + data.orders.length + ')';
+            content += '</button>';
+            content += '<div class="collapse mt-2" id="ordersDetails">';
+            content += '<div class="table-responsive" style="max-height: 300px; overflow-y: auto;">';
+            content += '<table class="table table-sm table-bordered">';
+            content += '<thead class="table-light">';
+            content += '<tr>';
+            content += '<th>Invoice</th>';
+            content += '<th>Customer</th>';
+            content += '<th>Time</th>';
+            content += '<th class="text-center">Items</th>';
+            content += '<th>Payment</th>';
+            content += '<th class="text-end">Total</th>';
+            content += '</tr>';
+            content += '</thead>';
+            content += '<tbody>';
+            
+            data.orders.forEach(order => {
+                content += '<tr>';
+                content += '<td>' + order.invoice_no + '</td>';
+                content += '<td>' + order.customer_name + '</td>';
+                content += '<td>' + order.order_date + '</td>';
+                content += '<td class="text-center">' + order.items_count + '</td>';
+                content += '<td>' + order.payment_type + '</td>';
+                content += '<td class="text-end">₱' + parseFloat(order.total).toLocaleString('en-PH', {minimumFractionDigits: 2}) + '</td>';
+                content += '</tr>';
+            });
+            
+            content += '</tbody>';
+            content += '</table>';
+            content += '</div>';
+            content += '</div>';
+            content += '</div>';
+        }
+    }
+    
+    Swal.fire({
+        title: '<i class="fas fa-calendar-day"></i> ' + dateLabel + ' - Order Products',
+        html: content,
+        width: '900px',
+        showCloseButton: true,
+        confirmButtonText: 'Close',
+        customClass: {
+            popup: 'swal-wide'
+        }
+    });
 }
 
 </script>

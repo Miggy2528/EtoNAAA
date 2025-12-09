@@ -9,6 +9,7 @@ use App\Models\Purchase;
 use App\Enums\PurchaseStatus;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class PurchaseController extends Controller
 {
@@ -22,7 +23,7 @@ class PurchaseController extends Controller
 
         if (!$supplier) {
             return view('supplier.purchases.index', [
-                'purchases' => collect([]),
+                'purchases' => new LengthAwarePaginator([], 0, 15),
                 'supplier' => null,
                 'stats' => $this->getEmptyStats()
             ]);
@@ -111,7 +112,7 @@ class PurchaseController extends Controller
         $purchase = $supplier->purchases()->findOrFail($id);
 
         $validated = $request->validate([
-            'status' => 'required|in:0,2,3', // 0=Pending, 2=For Delivery, 3=Complete
+            'status' => 'required|in:0,1,2,3', // 0=Pending, 1=Approved, 2=For Delivery, 3=Complete
         ]);
 
         $newStatus = (int) $validated['status'];
@@ -125,8 +126,49 @@ class PurchaseController extends Controller
             'notes' => ($purchase->notes ?? '') . "\n\n[Status Update - " . now()->format('Y-m-d H:i') . "]: Status changed from {$oldLabel} to {$newLabel} by supplier."
         ]);
 
+        // If status is Complete (3), create procurement records for supplier analytics
+        if ($newStatus === 3) {
+            $this->createProcurementRecords($purchase);
+        }
+
         return redirect()->route('supplier.purchases.show', $purchase->id)
             ->with('success', "Order status updated to {$newLabel} successfully.");
+    }
+
+    /**
+     * Create procurement/delivery records when purchase is marked as complete
+     */
+    private function createProcurementRecords($purchase)
+    {
+        // Load purchase details with products
+        $purchase->load('details.product');
+        
+        // Get expected delivery date (use purchase date + 3-7 days as expected)
+        $expectedDeliveryDate = $purchase->date->copy()->addDays(rand(3, 7));
+        
+        // Actual delivery date is now (when marked as complete)
+        $deliveryDate = now();
+        
+        // Determine if on-time or delayed
+        $isOnTime = $deliveryDate <= $expectedDeliveryDate;
+        $status = $isOnTime ? 'on-time' : 'delayed';
+        
+        // Create a procurement record for each product in the purchase
+        foreach ($purchase->details as $detail) {
+            // Calculate defective rate (assume 0-2% for good suppliers)
+            $defectiveRate = rand(0, 200) / 100;
+            
+            \App\Models\Procurement::create([
+                'supplier_id' => $purchase->supplier_id,
+                'product_id' => $detail->product_id,
+                'quantity_supplied' => $detail->quantity,
+                'expected_delivery_date' => $expectedDeliveryDate,
+                'delivery_date' => $deliveryDate,
+                'total_cost' => $detail->total,
+                'status' => $status,
+                'defective_rate' => $defectiveRate,
+            ]);
+        }
     }
 
     /**

@@ -229,7 +229,7 @@
     </div>
 
     <!-- Detailed Supplier Performance Table -->
-    <div class="row">
+    <div class="row mb-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
@@ -290,6 +290,152 @@
                                     <td colspan="7" class="text-center text-muted">
                                         <i class="fas fa-info-circle me-2"></i>
                                         No supplier performance data available
+                                    </td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Filter Card -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ route('reports.supplier.analytics') }}" id="filterForm">
+                <div class="row align-items-end">
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                        <label class="form-label mb-1">
+                            <i class="fas fa-calendar-alt me-1"></i>Date From
+                        </label>
+                        <input type="date" name="date_from" id="date_from" class="form-control" 
+                               value="{{ request('date_from') }}">
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                        <label class="form-label mb-1">
+                            <i class="fas fa-calendar-alt me-1"></i>Date To
+                        </label>
+                        <input type="date" name="date_to" id="date_to" class="form-control" 
+                               value="{{ request('date_to') }}">
+                    </div>
+                    <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+                        <label class="form-label mb-1">
+                            <i class="fas fa-search me-1"></i>Search
+                        </label>
+                        <input type="text" name="search" id="search" class="form-control" 
+                               placeholder="Supplier or Product" 
+                               value="{{ request('search') }}">
+                    </div>
+                    <div class="col-lg-3 col-md-12 col-sm-12 mb-3">
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i>Filter
+                            </button>
+                            <a href="{{ route('reports.supplier.analytics') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo me-1"></i>Reset
+                            </a>
+                            @if(request('date_from') || request('date_to') || request('search'))
+                            <span class="badge bg-info align-self-center">
+                                <i class="fas fa-filter me-1"></i>Filtered
+                            </span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recent Daily Deliveries -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-truck-loading me-2"></i>
+                        Recent Daily Deliveries
+                    </h3>
+                    <div class="ms-auto">
+                        <span class="badge bg-primary">Last 60 Days</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Supplier</th>
+                                    <th>Product</th>
+                                    <th class="text-center">Quantity</th>
+                                    <th class="text-end">Cost</th>
+                                    <th>Expected</th>
+                                    <th>Delivered</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-center">Defective %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($recentDeliveries as $index => $delivery)
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>
+                                        <i class="fas fa-building me-1 text-primary"></i>
+                                        <strong>{{ $delivery['supplier_name'] }}</strong>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-box me-1 text-secondary"></i>
+                                        {{ $delivery['product_name'] }}
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">{{ number_format($delivery['quantity']) }} units</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <strong>₱{{ number_format($delivery['total_cost'], 2) }}</strong>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar-day me-1"></i>
+                                            {{ \Carbon\Carbon::parse($delivery['expected_date'])->format('M d, Y') }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <small>
+                                            <i class="fas fa-calendar-check me-1"></i>
+                                            {{ \Carbon\Carbon::parse($delivery['delivery_date'])->format('M d, Y') }}
+                                        </small>
+                                        @if($delivery['delay_days'] > 0)
+                                        <br><span class="badge bg-warning text-dark">+{{ $delivery['delay_days'] }} days</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center">
+                                        @if($delivery['status'] === 'on-time')
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle me-1"></i>On-Time
+                                        </span>
+                                        @elseif($delivery['status'] === 'delayed')
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>Delayed
+                                        </span>
+                                        @else
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-clock me-1"></i>{{ ucfirst($delivery['status']) }}
+                                        </span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-{{ $delivery['defective_rate'] <= 2 ? 'success' : ($delivery['defective_rate'] <= 5 ? 'warning' : 'danger') }}">
+                                            {{ number_format($delivery['defective_rate'], 1) }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted py-4">
+                                        <i class="fas fa-box-open fa-2x mb-2"></i>
+                                        <p class="mb-0">No recent deliveries found</p>
                                     </td>
                                 </tr>
                                 @endforelse

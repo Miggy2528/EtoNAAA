@@ -198,6 +198,30 @@
         border-radius: 10px;
         padding: 1.5rem;
         margin-bottom: 1.5rem;
+    }
+    
+    /* Custom date input styling for word format display */
+    .date-word-input {
+        position: relative;
+        font-weight: 500;
+        background-color: white;
+        cursor: pointer;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23666' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px;
+        padding-right: 2.5rem;
+    }
+    
+    .date-word-input:hover {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+    }
+    
+    .date-word-input:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
         border: 1px solid rgba(0,0,0,0.05);
     }
     
@@ -1192,7 +1216,7 @@
                                     <tr>
                                         <th>Product</th>
                                         <th>Animal Type</th>
-                                        <th>Cut</th>
+                                        <th>Cut Type</th>
                                         <th class="text-end">Quantity</th>
                                         <th>Expired On</th>
                                         <th>Status</th>
@@ -1238,6 +1262,86 @@
         </div>
     </div>
 
+    <!-- Inventory In / Out Movement Summary -->
+    <div class="dashboard-section">
+        <h2 class="section-title">
+            <i class="fas fa-exchange-alt me-2"></i>Inventory In / Out of Products
+        </h2>
+        
+        <!-- Search Filter for Inventory Movements -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="input-group">
+                    <span class="input-group-text bg-white">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" 
+                           id="inventoryMovementSearch" 
+                           class="form-control" 
+                           placeholder="Search products by name..."
+                           onkeyup="filterInventoryMovements()">
+                    <button class="btn btn-outline-secondary" type="button" onclick="clearInventorySearch()">
+                        <i class="fas fa-times me-1"></i>Clear
+                    </button>
+                </div>
+                <small class="text-muted d-block mt-2">
+                    <i class="fas fa-info-circle me-1"></i>
+                    <span id="inventoryMovementCount">Showing {{ $inventoryMovements->count() }} products</span>
+                </small>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <div class="card stat-card">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover table-sm mb-0" id="inventoryMovementTable">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th>Product</th>
+                                        <th class="text-end">Total In</th>
+                                        <th class="text-end">Total Out</th>
+                                        <th class="text-end">Net Movement</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($inventoryMovements as $movement)
+                                        <tr class="inventory-movement-row">
+                                            <td class="product-name-data">{{ $movement->product->name ?? 'N/A' }}</td>
+                                            <td class="text-end text-success">{{ $movement->total_in }}</td>
+                                            <td class="text-end text-danger">{{ $movement->total_out }}</td>
+                                            <td class="text-end fw-bold">{{ $movement->total_in - $movement->total_out }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr id="noMovementRow">
+                                            <td colspan="4" class="text-center text-muted py-4">
+                                                <div class="empty-state">
+                                                    <i class="fas fa-box"></i>
+                                                    <h4>No Inventory Movements</h4>
+                                                    <p class="text-muted mb-0">No in/out movements have been recorded for products yet</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                    <tr id="noResultsRow" style="display: none;">
+                                        <td colspan="4" class="text-center text-muted py-4">
+                                            <div class="empty-state">
+                                                <i class="fas fa-search"></i>
+                                                <h4>No Results Found</h4>
+                                                <p class="text-muted mb-0">No products match your search criteria</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Products Table with Filters -->
     <div class="dashboard-section">
         <h2 class="section-title">
@@ -1269,11 +1373,19 @@
                     </div>
                     <div class="col-lg-2 col-md-3 col-sm-6 mb-3">
                         <label class="form-label mb-1">Date From</label>
-                        <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
+                        <input type="text" name="date_from" id="date_from" class="form-control date-word-input" 
+                               placeholder="15 Nov, 2025" 
+                               value="{{ request('date_from') ? \Carbon\Carbon::parse(request('date_from'))->format('d M, Y') : '' }}" 
+                               readonly>
+                        <input type="hidden" name="date_from_hidden" id="date_from_hidden" value="{{ request('date_from') }}">
                     </div>
                     <div class="col-lg-2 col-md-3 col-sm-6 mb-3">
                         <label class="form-label mb-1">Date To</label>
-                        <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+                        <input type="text" name="date_to" id="date_to" class="form-control date-word-input" 
+                               placeholder="20 Nov, 2025" 
+                               value="{{ request('date_to') ? \Carbon\Carbon::parse(request('date_to'))->format('d M, Y') : '' }}" 
+                               readonly>
+                        <input type="hidden" name="date_to_hidden" id="date_to_hidden" value="{{ request('date_to') }}">
                     </div>
                     <div class="col-lg-4 col-md-12 mb-3">
                         <div class="d-flex gap-2 flex-wrap">
@@ -1746,6 +1858,102 @@
             });
     }, 30000);
     
+    // Format date inputs to show dates in word format
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateFromInput = document.getElementById('date_from');
+        const dateToInput = document.getElementById('date_to');
+        const dateFromHidden = document.getElementById('date_from_hidden');
+        const dateToHidden = document.getElementById('date_to_hidden');
+        
+        // Initialize hidden fields with actual dates
+        if (dateFromInput.value && !dateFromHidden.value) {
+            dateFromHidden.value = parseDateFromWord(dateFromInput.value);
+        }
+        if (dateToInput.value && !dateToHidden.value) {
+            dateToHidden.value = parseDateFromWord(dateToInput.value);
+        }
+        
+        // Create hidden date pickers
+        const dateFromPicker = document.createElement('input');
+        dateFromPicker.type = 'date';
+        dateFromPicker.style.position = 'absolute';
+        dateFromPicker.style.opacity = '0';
+        dateFromPicker.style.pointerEvents = 'none';
+        dateFromPicker.value = dateFromHidden.value;
+        dateFromInput.parentNode.appendChild(dateFromPicker);
+        
+        const dateToPicker = document.createElement('input');
+        dateToPicker.type = 'date';
+        dateToPicker.style.position = 'absolute';
+        dateToPicker.style.opacity = '0';
+        dateToPicker.style.pointerEvents = 'none';
+        dateToPicker.value = dateToHidden.value;
+        dateToInput.parentNode.appendChild(dateToPicker);
+        
+        // Show date picker when clicking the word-format input
+        dateFromInput.addEventListener('click', function() {
+            dateFromPicker.showPicker();
+        });
+        
+        dateToInput.addEventListener('click', function() {
+            dateToPicker.showPicker();
+        });
+        
+        // Update word format when date changes
+        dateFromPicker.addEventListener('change', function() {
+            const formattedDate = formatDateToWord(this.value);
+            dateFromInput.value = formattedDate;
+            dateFromHidden.value = this.value;
+        });
+        
+        dateToPicker.addEventListener('change', function() {
+            const formattedDate = formatDateToWord(this.value);
+            dateToInput.value = formattedDate;
+            dateToHidden.value = this.value;
+        });
+        
+        function formatDateToWord(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr + 'T00:00:00');
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const day = date.getDate();
+            const month = months[date.getMonth()];
+            const year = date.getFullYear();
+            return `${day} ${month}, ${year}`;
+        }
+        
+        function parseDateFromWord(wordDate) {
+            if (!wordDate) return '';
+            // This is a simplified parser - assumes format: "15 Nov, 2025"
+            const months = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
+                           'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'};
+            const parts = wordDate.replace(',', '').split(' ');
+            if (parts.length === 3) {
+                const day = parts[0].padStart(2, '0');
+                const month = months[parts[1]];
+                const year = parts[2];
+                return `${year}-${month}-${day}`;
+            }
+            return '';
+        }
+        
+        // Update form submission to use hidden fields
+        const form = dateFromInput.closest('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Update the main inputs with ISO format for submission
+                if (dateFromHidden.value) {
+                    dateFromInput.name = 'date_from';
+                    dateFromInput.value = dateFromHidden.value;
+                }
+                if (dateToHidden.value) {
+                    dateToInput.name = 'date_to';
+                    dateToInput.value = dateToHidden.value;
+                }
+            });
+        }
+    });
+    
     // Export table to CSV function
     function exportTableToCSV(filename) {
         const csv = [];
@@ -1890,6 +2098,57 @@
                 document.head.removeChild(style);
             }, 1000);
         }, 100);
+    }
+    
+    // Filter inventory movements by product name
+    function filterInventoryMovements() {
+        const searchInput = document.getElementById('inventoryMovementSearch');
+        const filter = searchInput.value.toLowerCase().trim();
+        const table = document.getElementById('inventoryMovementTable');
+        const rows = table.getElementsByClassName('inventory-movement-row');
+        const noResultsRow = document.getElementById('noResultsRow');
+        const noMovementRow = document.getElementById('noMovementRow');
+        const countSpan = document.getElementById('inventoryMovementCount');
+        
+        let visibleCount = 0;
+        
+        // Loop through all table rows
+        for (let i = 0; i < rows.length; i++) {
+            const productNameCell = rows[i].getElementsByClassName('product-name-data')[0];
+            
+            if (productNameCell) {
+                const productName = productNameCell.textContent || productNameCell.innerText;
+                
+                if (productName.toLowerCase().indexOf(filter) > -1) {
+                    rows[i].style.display = '';
+                    visibleCount++;
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+        
+        // Show/hide no results message
+        if (visibleCount === 0 && rows.length > 0) {
+            if (noResultsRow) noResultsRow.style.display = '';
+            if (noMovementRow) noMovementRow.style.display = 'none';
+        } else {
+            if (noResultsRow) noResultsRow.style.display = 'none';
+            if (noMovementRow && rows.length === 0) noMovementRow.style.display = '';
+        }
+        
+        // Update count
+        if (countSpan) {
+            countSpan.textContent = `Showing ${visibleCount} of ${rows.length} products`;
+        }
+    }
+    
+    // Clear inventory movement search
+    function clearInventorySearch() {
+        const searchInput = document.getElementById('inventoryMovementSearch');
+        searchInput.value = '';
+        filterInventoryMovements();
+        searchInput.focus();
     }
 </script>
 @endpush

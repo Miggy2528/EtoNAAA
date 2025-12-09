@@ -122,13 +122,30 @@
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-auto">
-                            <span class="bg-warning text-white avatar">
-                                <i class="fas fa-receipt"></i>
+                            <span class="bg-danger text-white avatar">
+                                <i class="fas fa-money-bill-wave"></i>
                             </span>
                         </div>
                         <div class="col">
-                            <div class="font-weight-medium" id="averageOrderValue">Loading...</div>
-                            <div class="text-muted">Avg Order Value</div>
+                            <div class="font-weight-medium" id="totalExpenses">Loading...</div>
+                            <div class="text-muted">Total Expenses</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-info text-white avatar">
+                                <i class="fas fa-balance-scale"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium" id="netIncome">Loading...</div>
+                            <div class="text-muted">Net Income (Sales - Expenses)</div>
                         </div>
                     </div>
                 </div>
@@ -296,7 +313,8 @@ function updateSummaryCards() {
     document.getElementById('totalSales').textContent = '₱' + (salesData.total_sales || 0).toLocaleString();
     document.getElementById('averageDailySales').textContent = '₱' + (salesData.average_daily_sales || 0).toLocaleString();
     document.getElementById('totalOrders').textContent = salesData.total_orders || 0;
-    document.getElementById('averageOrderValue').textContent = '₱' + (salesData.average_order_value || 0).toLocaleString();
+    document.getElementById('totalExpenses').textContent = '₱' + (salesData.total_expenses || 0).toLocaleString();
+    document.getElementById('netIncome').textContent = '₱' + (salesData.net_income || 0).toLocaleString();
 }
 
 // Update top product
@@ -315,9 +333,9 @@ function updateSalesPerformance() {
     const container = document.getElementById('salesPerformance');
     
     const totalSales = salesData.total_sales || 0;
-    const averageDailySales = salesData.average_daily_sales || 0;
-    const totalOrders = salesData.total_orders || 0;
     const averageOrderValue = salesData.average_order_value || 0;
+    const totalExpenses = salesData.total_expenses || 0;
+    const netIncome = salesData.net_income || 0;
     
     container.innerHTML = `
         <div class="row">
@@ -326,7 +344,9 @@ function updateSalesPerformance() {
                 <p><strong>Total Revenue:</strong> ₱${totalSales.toLocaleString()}</p>
                 <p><strong>Daily Average:</strong> ₱${averageDailySales.toLocaleString()}</p>
                 <p><strong>Total Orders:</strong> ${totalOrders.toLocaleString()}</p>
-                <p><strong>Avg Order Value:</strong> ₱${averageOrderValue.toLocaleString()}</p>
+                <p><strong>Average Order Value:</strong> ₱${averageOrderValue.toLocaleString()}</p>
+                <p><strong>Total Expenses:</strong> ₱${totalExpenses.toLocaleString()}</p>
+                <p><strong>Net Income (Sales - Expenses):</strong> ₱${netIncome.toLocaleString()}</p>
             </div>
         </div>
         <div class="row mt-3">

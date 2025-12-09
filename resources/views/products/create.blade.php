@@ -215,7 +215,7 @@
 
                                     {{-- Other Product Fields --}}
                                     <div class="col-md-6">
-                                        <x-input type="number" label="Buying Price" name="buying_price"
+                                        <x-input type="number" label="Cost" name="buying_price"
                                                  id="buying_price" placeholder="0"
                                                  value="{{ old('buying_price') }}" />
                                     </div>

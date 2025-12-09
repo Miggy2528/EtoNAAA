@@ -30,10 +30,8 @@ class DatabaseSeeder extends Seeder
             MarketAnalysisTrendSeeder::class, // Add Market Analysis Trend Data
         ]);
 
-        $orders = Order::factory(50)->create();
-        $customers = Customer::factory(30)
-            ->recycle($orders)
-            ->create();
+        // Create customers first (needed for orders)
+        $customers = Customer::factory(50)->create();
 
         $purchases = Purchase::factory(60)->create();
         $suppliers = Supplier::factory(20)->create();
@@ -48,6 +46,11 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@admin.com',
             'role' => 'admin',
             'status' => 'active'
+        ]);
+
+        // Generate realistic sales analytics data (2020-2025)
+        $this->call([
+            RealisticSalesAnalyticsSeeder::class,
         ]);
 
         /*

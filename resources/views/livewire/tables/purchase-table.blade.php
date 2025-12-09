@@ -1,40 +1,279 @@
-<div class="card">
-    <div class="card-header">
-        <div>
-            <h3 class="card-title">
-                {{ __('Purchases') }}
-            </h3>
-        </div>
-
-        <div class="card-actions">
-            <x-action.create route="{{ route('purchases.create') }}" />
+<div>
+    <style>
+        .purchase-table-wrapper .card {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+            border: none;
+        }
+        .purchase-table-wrapper .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom: none;
+        }
+        .purchase-table-wrapper .card-header h3 {
+            color: white;
+            margin: 0;
+        }
+        .purchase-table-wrapper .supplier-header-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        .purchase-table-wrapper .supplier-header-card a {
+            color: white;
+        }
+        .purchase-table-wrapper .stats-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .purchase-table-wrapper .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1);
+        }
+        .purchase-table-wrapper .avatar {
+            width: 3rem;
+            height: 3rem;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .purchase-table-wrapper .table thead th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+        .purchase-table-wrapper .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        .purchase-table-wrapper .btn-icon {
+            margin: 0 0.15rem;
+        }
+        .filter-section {
+            background-color: #f8f9fa;
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+    </style>
+    
+    <div class="purchase-table-wrapper">
+    @if($supplier)
+    <!-- Supplier Information Header -->
+    <div class="card mb-4 supplier-header-card">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <div class="avatar avatar-xl rounded" style="background-color: rgba(255,255,255,0.2);">
+                        <span class="text-white fs-1 fw-bold">{{ strtoupper(substr($supplier->name, 0, 2)) }}</span>
+                    </div>
+                </div>
+                <div class="col">
+                    <h2 class="mb-1 text-white">
+                        <i class="fas fa-building me-2"></i>{{ $supplier->name }}
+                    </h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-white opacity-75">
+                                <i class="fas fa-envelope me-1"></i>
+                                <a href="mailto:{{ $supplier->email }}" class="text-white text-decoration-none">{{ $supplier->email }}</a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-white opacity-75">
+                                <i class="fas fa-phone me-1"></i>
+                                <a href="tel:{{ $supplier->phone }}" class="text-white text-decoration-none">{{ $supplier->phone }}</a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-white opacity-75">
+                                <i class="fas fa-map-marker-alt me-1"></i>
+                                {{ $supplier->address ?? 'N/A' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <a href="{{ route('suppliers.show', $supplier) }}" class="btn btn-light">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Supplier
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="card-body border-bottom py-3">
-        <div class="d-flex">
-            <div class="text-secondary">
-                Show
-                <div class="mx-2 d-inline-block">
-                    <select wire:model.live="perPage" class="form-select form-select-sm" aria-label="result per page">
+    <!-- Statistics Cards -->
+    @if($stats)
+    <div class="row mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-sm stats-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-primary text-white avatar">
+                                <i class="fas fa-shopping-cart"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium fs-3">
+                                {{ $stats['total_orders'] ?? 0 }}
+                            </div>
+                            <div class="text-muted small">
+                                Total Orders
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-sm stats-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-success text-white avatar">
+                                <i class="fas fa-peso-sign"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium fs-4">
+                                ₱{{ number_format($stats['total_amount'] ?? 0, 2) }}
+                            </div>
+                            <div class="text-muted small">
+                                Total Amount
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-sm stats-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-warning text-white avatar">
+                                <i class="fas fa-clock"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium fs-3">
+                                {{ $stats['pending_orders'] ?? 0 }}
+                            </div>
+                            <div class="text-muted small">
+                                Pending Orders
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-sm stats-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <span class="bg-info text-white avatar">
+                                <i class="fas fa-check-circle"></i>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <div class="font-weight-medium fs-3">
+                                {{ $stats['completed_orders'] ?? 0 }}
+                            </div>
+                            <div class="text-muted small">
+                                Completed Orders
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+    @endif
+
+    <!-- Main Purchase Table Card -->
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <h3 class="card-title">
+                    @if($supplier)
+                        <i class="fas fa-list-alt me-2"></i>Purchase Orders from {{ $supplier->name }}
+                    @else
+                        {{ __('Purchases') }}
+                    @endif
+                </h3>
+            </div>
+
+            <div class="card-actions">
+                <x-action.create route="{{ route('purchases.create') }}" />
+            </div>
+        </div>
+
+        <!-- Advanced Filters -->
+        <div class="card-body border-bottom py-3">
+            <div class="row g-3">
+                <!-- Search -->
+                <div class="col-md-3">
+                    <label class="form-label small mb-1">Search</label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" wire:model.live="search" class="form-control" placeholder="Search purchases...">
+                    </div>
+                </div>
+                
+                <!-- Status Filter -->
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Status</label>
+                    <select wire:model.live="statusFilter" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="0">Pending</option>
+                        <option value="1">Approved</option>
+                        <option value="2">For Delivery</option>
+                        <option value="3">Complete</option>
+                        <option value="4">Received</option>
+                    </select>
+                </div>
+                
+                <!-- Date From -->
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Date From</label>
+                    <input type="date" wire:model.live="dateFrom" class="form-control">
+                </div>
+                
+                <!-- Date To -->
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Date To</label>
+                    <input type="date" wire:model.live="dateTo" class="form-control">
+                </div>
+                
+                <!-- Per Page -->
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Show Entries</label>
+                    <select wire:model.live="perPage" class="form-select">
                         <option value="5">5</option>
                         <option value="10">10</option>
                         <option value="15">15</option>
                         <option value="25">25</option>
+                        <option value="50">50</option>
                     </select>
                 </div>
-                entries
-            </div>
-            <div class="ms-auto text-secondary">
-                Search:
-                <div class="ms-2 d-inline-block">
-                    <input type="text" wire:model.live="search" class="form-control form-control-sm" aria-label="Search invoice">
+                
+                <!-- Clear Filters -->
+                <div class="col-md-1">
+                    <label class="form-label small mb-1">&nbsp;</label>
+                    <button wire:click="clearFilters" class="btn btn-outline-secondary w-100" title="Clear all filters">
+                        <i class="fas fa-redo"></i>
+                    </button>
                 </div>
             </div>
         </div>
-    </div>
 
-    <x-spinner.loading-spinner/>
+        <x-spinner.loading-spinner/>
 
     <div class="table-responsive">
         <table wire:loading.remove class="table table-bordered card-table table-vcenter text-nowrap datatable">
@@ -123,6 +362,14 @@
                         @elseif ($purchase->status === \App\Enums\PurchaseStatus::APPROVED)
                             <x-button.edit class="btn-icon" route="{{ route('purchases.edit', $purchase) }}"/>
                         @endif
+                        
+                        <!-- Download Invoice -->
+                        <a href="{{ route('purchases.download-invoice', $purchase) }}" 
+                           class="btn btn-icon btn-outline-info" 
+                           title="Download Invoice"
+                           data-bs-toggle="tooltip">
+                            <i class="fas fa-file-pdf"></i>
+                        </a>
                     </td>
                 </tr>
                 @empty
@@ -138,12 +385,23 @@
 
     <div class="card-footer d-flex align-items-center">
         <p class="m-0 text-secondary">
-            Showing <span>{{ $purchases->firstItem() }}</span>
-            to <span>{{ $purchases->lastItem() }}</span> of <span>{{ $purchases->total() }}</span> entries
+            Showing <span>{{ $purchases->firstItem() ?? 0 }}</span>
+            to <span>{{ $purchases->lastItem() ?? 0 }}</span> of <span>{{ $purchases->total() }}</span> entries
+            @if($supplier)
+                <span class="badge bg-primary ms-2">Filtered by: {{ $supplier->name }}</span>
+            @endif
+            @if($statusFilter)
+                <span class="badge bg-info ms-2">Status Filter Active</span>
+            @endif
+            @if($dateFrom || $dateTo)
+                <span class="badge bg-secondary ms-2">Date Filter Active</span>
+            @endif
         </p>
 
         <ul class="pagination m-0 ms-auto">
         {{ $purchases->links() }}
         </ul>
     </div>
+</div>
+</div>
 </div>

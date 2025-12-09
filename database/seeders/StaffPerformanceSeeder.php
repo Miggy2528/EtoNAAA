@@ -15,7 +15,7 @@ class StaffPerformanceSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create 12 dummy staff members
+        // Create 20 dummy staff members
         $staffData = [
             ['John Dela Cruz', 'Butcher', '09123456789'],
             ['Maria Santos', 'Cashier', '09234567890'],
@@ -28,7 +28,15 @@ class StaffPerformanceSeeder extends Seeder
             ['Nathan Cruz', 'Cleaner', '09901234567'],
             ['Lea Villanueva', 'Cashier', '09012345678'],
             ['Rico Bautista', 'Delivery Staff', '09123456780'],
-            ['Tina Ramos', 'Supervisor', '09234567891']
+            ['Tina Ramos', 'Supervisor', '09234567891'],
+            ['Miguel Garcia', 'Butcher', '09345678902'],
+            ['Sofia Rodriguez', 'Cashier', '09456789013'],
+            ['Gabriel Torres', 'Inventory Clerk', '09567890124'],
+            ['Isabella Navarro', 'Delivery Staff', '09678901235'],
+            ['Luis Hernandez', 'Cleaner', '09789012346'],
+            ['Carmen Flores', 'Butcher', '09890123457'],
+            ['Diego Castillo', 'Cashier', '09901234568'],
+            ['Valentina Morales', 'Inventory Clerk', '09012345679']
         ];
 
         $staff = [];

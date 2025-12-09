@@ -374,6 +374,9 @@
     <script src="{{ asset('assets/js/jquery-3.6.0.min.js') }}"></script>
     <script src="{{ asset('assets/js/bootstrap.bundle.min.js') }}"></script>
 
+    <!-- Vite JS (includes Chart.js) -->
+    @vite(['resources/js/app.js'])
+
     @stack('page-scripts')
     @livewireScripts
 </body>

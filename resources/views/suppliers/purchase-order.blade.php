@@ -2,6 +2,33 @@
 
 @section('content')
 <div class="container-fluid">
+    <!-- Error/Success Messages -->
+    @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Error!</strong> {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
+    
+    @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <strong>Success!</strong> {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
+    
+    @if($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Validation Errors:</strong>
+        <ul class="mb-0">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
+    
     <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
@@ -33,7 +60,10 @@
                     <div class="d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="fas fa-file-invoice me-2 text-primary"></i>Purchase Order Form</h5>
                         <div>
-                            <button type="button" class="btn btn-success" onclick="printPO()">
+                            <button type="button" class="btn btn-danger" onclick="downloadPDF()">
+                                <i class="fas fa-file-pdf me-2"></i>Download PDF
+                            </button>
+                            <button type="button" class="btn btn-success ms-2" onclick="printPO()">
                                 <i class="fas fa-print me-2"></i>Print PO
                             </button>
                         </div>
@@ -72,7 +102,7 @@
                             <table class="table table-borderless">
                                 <tr>
                                     <td><strong>PO Number:</strong></td>
-                                    <td>PO-{{ date('Ymd') }}-{{ rand(1000, 9999) }}</td>
+                                    <td id="po-number-display">PO-{{ date('Ymd') }}-{{ rand(1000, 9999) }}</td>
                                 </tr>
                                 <tr>
                                     <td><strong>Date:</strong></td>
@@ -160,7 +190,7 @@
                     <div class="row mb-4">
                         <div class="col-12">
                             <h4 class="mb-3">Additional Notes</h4>
-                            <textarea class="form-control" rows="3" placeholder="Enter any special instructions or notes for this purchase order..."></textarea>
+                            <textarea id="notes-input" class="form-control" rows="3" placeholder="Enter any special instructions or notes for this purchase order..."></textarea>
                         </div>
                     </div>
                     
@@ -427,6 +457,129 @@
         if (confirm('Are you sure you want to submit this purchase order to the supplier?')) {
             savePurchaseOrder(); // Save and submit
         }
+    }
+    
+    // Download PDF function
+    function downloadPDF() {
+        console.log('Download PDF button clicked');
+        
+        // Ensure all calculations are up to date
+        calculateAllTotals();
+        
+        // Collect product data with non-zero quantities
+        const products = [];
+        document.querySelectorAll('.quantity-input').forEach(input => {
+            const quantity = parseInt(input.value) || 0;
+            if (quantity > 0) {
+                const row = input.closest('tr');
+                const totalCell = row.querySelector('.total-cell');
+                const totalText = totalCell.textContent.replace('₱', '').replace(',', '');
+                const total = parseFloat(totalText) || 0;
+                const unitPrice = parseFloat(input.dataset.unitPrice) || 0;
+                
+                products.push({
+                    id: input.dataset.productId,
+                    quantity: quantity,
+                    unit_price: unitPrice,
+                    total: total
+                });
+            }
+        });
+        
+        console.log('Products collected:', products);
+        
+        if (products.length === 0) {
+            alert('Please add at least one product with quantity greater than 0.');
+            return;
+        }
+        
+        // Get totals
+        const subtotalText = document.getElementById('subtotal').textContent.replace('₱', '').replace(',', '');
+        const taxText = document.getElementById('tax').textContent.replace('₱', '').replace(',', '');
+        const totalText = document.getElementById('total-amount').textContent.replace('₱', '').replace(',', '');
+        
+        const subtotal = parseFloat(subtotalText) || 0;
+        const tax = parseFloat(taxText) || 0;
+        const totalAmount = parseFloat(totalText) || 0;
+        
+        console.log('Totals - Subtotal:', subtotal, 'Tax:', tax, 'Total:', totalAmount);
+        
+        // Get PO number and notes
+        const poNumber = document.getElementById('po-number-display').textContent.trim();
+        const notes = document.getElementById('notes-input').value;
+        
+        console.log('PO Number:', poNumber, 'Notes:', notes);
+        
+        // Create a hidden form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ route('suppliers.purchase-order.pdf', $supplier) }}';
+        form.target = '_blank';
+        
+        // Add CSRF token
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_token';
+        csrfInput.value = '{{ csrf_token() }}';
+        form.appendChild(csrfInput);
+        
+        // Add products array - each product as separate indexed inputs
+        products.forEach((product, index) => {
+            // Add product id
+            const idInput = document.createElement('input');
+            idInput.type = 'hidden';
+            idInput.name = `products[${index}][id]`;
+            idInput.value = product.id;
+            form.appendChild(idInput);
+            
+            // Add product quantity
+            const qtyInput = document.createElement('input');
+            qtyInput.type = 'hidden';
+            qtyInput.name = `products[${index}][quantity]`;
+            qtyInput.value = product.quantity;
+            form.appendChild(qtyInput);
+            
+            // Add product unit_price
+            const priceInput = document.createElement('input');
+            priceInput.type = 'hidden';
+            priceInput.name = `products[${index}][unit_price]`;
+            priceInput.value = product.unit_price;
+            form.appendChild(priceInput);
+            
+            // Add product total
+            const totalInput = document.createElement('input');
+            totalInput.type = 'hidden';
+            totalInput.name = `products[${index}][total]`;
+            totalInput.value = product.total;
+            form.appendChild(totalInput);
+        });
+        
+        // Add other form fields
+        const fieldsToAdd = [
+            { name: 'po_number', value: poNumber },
+            { name: 'notes', value: notes },
+            { name: 'subtotal', value: subtotal },
+            { name: 'tax', value: tax },
+            { name: 'total_amount', value: totalAmount }
+        ];
+        
+        fieldsToAdd.forEach(field => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = field.name;
+            input.value = field.value;
+            form.appendChild(input);
+        });
+        
+        console.log('Form created, submitting...');
+        
+        document.body.appendChild(form);
+        form.submit();
+        
+        // Keep form for a moment to allow submission
+        setTimeout(() => {
+            document.body.removeChild(form);
+        }, 1000);
     }
 </script>
 @endsection

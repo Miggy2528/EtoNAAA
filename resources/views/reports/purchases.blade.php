@@ -26,9 +26,8 @@
         </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="row mb-4" id="summaryCards">
-        <div class="col-md-3">
+            <div class="row mb-4" id="summaryCards">
+                <div class="col-md-3">
             <div class="card">
                 <div class="card-body">
                     <div class="row align-items-center">
@@ -210,9 +209,25 @@
 <script>
 let supplierData = {};
 let supplierChart = null;
+let currentDateFrom = '';
+let currentDateTo = '';
 
 // Load supplier data on page load
 document.addEventListener('DOMContentLoaded', function() {
+    const dateFromInput = document.getElementById('supplierDateFrom');
+    const dateToInput = document.getElementById('supplierDateTo');
+
+    if (dateFromInput && dateToInput) {
+        dateFromInput.addEventListener('change', function() {
+            currentDateFrom = this.value;
+            loadSupplierData();
+        });
+        dateToInput.addEventListener('change', function() {
+            currentDateTo = this.value;
+            loadSupplierData();
+        });
+    }
+
     loadSupplierData();
     
     // Auto-refresh every 5 minutes
@@ -222,7 +237,19 @@ document.addEventListener('DOMContentLoaded', function() {
 // Load supplier analytics data
 async function loadSupplierData() {
     try {
-        const response = await fetch('/api/analytics/suppliers');
+        let url = '/api/analytics/suppliers';
+        const params = [];
+        if (currentDateFrom) {
+            params.push('date_from=' + encodeURIComponent(currentDateFrom));
+        }
+        if (currentDateTo) {
+            params.push('date_to=' + encodeURIComponent(currentDateTo));
+        }
+        if (params.length > 0) {
+            url += '?' + params.join('&');
+        }
+
+        const response = await fetch(url);
         const data = await response.json();
         
         if (data.status === 'success') {
@@ -462,6 +489,16 @@ function updateLastUpdated() {
 
 // Refresh data
 function refreshData() {
+    loadSupplierData();
+}
+
+function clearSupplierDateFilters() {
+    currentDateFrom = '';
+    currentDateTo = '';
+    const dateFromInput = document.getElementById('supplierDateFrom');
+    const dateToInput = document.getElementById('supplierDateTo');
+    if (dateFromInput) dateFromInput.value = '';
+    if (dateToInput) dateToInput.value = '';
     loadSupplierData();
 }
 

@@ -1,9 +1,5 @@
 @extends('layouts.butcher')
 
-@push('page-scripts')
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-@endpush
-
 @section('content')
 <div class="container-fluid py-4">
     <!-- Page Header -->
@@ -46,11 +42,6 @@
                     <div class="card-body">
                         <div class="chart-container" style="position: relative; height: 300px;">
                             <canvas id="performanceChart"></canvas>
-                        </div>
-                        <!-- Debug information -->
-                        <div id="chartDebug" class="mt-3 small text-muted d-none">
-                            <strong>Debug Info:</strong>
-                            <div id="debugData"></div>
                         </div>
                     </div>
                 </div>
@@ -275,15 +266,6 @@ function initPerformanceChart() {
         // Prepare data from PHP
         const performanceData = @json($performanceData);
         
-        // Debug information
-        const debugDiv = document.getElementById('debugData');
-        const chartDebug = document.getElementById('chartDebug');
-        if (debugDiv) {
-            debugDiv.innerHTML = 'Data points: ' + (performanceData ? performanceData.length : 'null') + '<br>' + 
-                                'First item: ' + JSON.stringify(performanceData && performanceData[0] ? performanceData[0] : 'none');
-            chartDebug.classList.remove('d-none');
-        }
-        
         // Check if we have data
         if (performanceData && performanceData.length > 0) {
             const labels = performanceData.map(item => item.name);
@@ -355,9 +337,6 @@ function initPerformanceChart() {
                 });
             } catch (error) {
                 console.error('Chart initialization error:', error);
-                if (debugDiv) {
-                    debugDiv.innerHTML += '<br>Error: ' + error.message;
-                }
             }
         } else {
             // Show a message when no data is available
